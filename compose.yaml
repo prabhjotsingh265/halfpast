@@ -54,7 +54,7 @@ services:
             retries: 10
 
     redis:
-        image: redis:8-alpine
+        image: redis:8.2-alpine
         volumes:
             - redis:/data
         healthcheck:

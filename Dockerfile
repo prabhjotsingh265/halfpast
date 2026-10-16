@@ -3,7 +3,7 @@
 # Node is only copied into the dev image (Vite, npm). Production gets its own stage later.
 FROM node:24-bookworm-slim AS node
 
-FROM dunglas/frankenphp:1-php8.5-bookworm AS base
+FROM dunglas/frankenphp:1.12-php8.4-bookworm AS base
 
 ARG UID=1000
 ARG GID=1000

@@ -25,7 +25,7 @@ const tint = computed(() => {
 
 <template>
     <span
-        class="grid shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,var(--from),var(--to))] font-semibold ring-1 ring-black/5 ring-inset dark:bg-[linear-gradient(135deg,var(--from-dark),var(--to-dark))] dark:ring-white/10"
+        class="grid shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,var(--from),var(--to))] font-semibold text-foreground ring-1 ring-black/5 ring-inset dark:bg-[linear-gradient(135deg,var(--from-dark),var(--to-dark))] dark:ring-white/10"
         :class="
             {
                 xs: 'size-6 text-[10px]',

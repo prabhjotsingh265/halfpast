@@ -49,7 +49,8 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * The business the dashboard is showing, for the header and navigation.
+     * The business being looked at: the one the dashboard is showing, or the
+     * one whose booking page this is.
      *
      * @return array<string, mixed>|null
      */
@@ -58,7 +59,8 @@ class HandleInertiaRequests extends Middleware
         $business = app(CurrentBusiness::class)->get();
         $user = $request->user();
 
-        if ($business === null || ! $user instanceof User) {
+        // Customers on a booking page see the business too, with no role.
+        if ($business === null) {
             return null;
         }
 
@@ -68,7 +70,7 @@ class HandleInertiaRequests extends Middleware
             'slug' => $business->slug,
             'timezone' => $business->timezone,
             'currency' => $business->currency,
-            'role' => $user->roleIn($business)?->value,
+            'role' => $user instanceof User ? $user->roleIn($business)?->value : null,
         ];
     }
 }

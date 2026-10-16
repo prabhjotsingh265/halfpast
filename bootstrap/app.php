@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureUserHasBusiness;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetCurrentBusiness;
+use App\Http\Middleware\UseBusinessFromAddress;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,9 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // Route models like {service} must load inside the current business,
         // so the business is worked out before bindings are resolved.
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: SetCurrentBusiness::class);
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: UseBusinessFromAddress::class);
 
         $middleware->alias([
             'has-business' => EnsureUserHasBusiness::class,
+            'business-from-address' => UseBusinessFromAddress::class,
         ]);
 
         $middleware->web(append: [

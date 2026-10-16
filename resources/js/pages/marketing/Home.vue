@@ -1,14 +1,25 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import ClosingCta from '@/components/marketing/ClosingCta.vue';
 import DayScroll from '@/components/marketing/DayScroll.vue';
+import FaqSection from '@/components/marketing/FaqSection.vue';
 import FeaturesSection from '@/components/marketing/FeaturesSection.vue';
 import HeroSection from '@/components/marketing/HeroSection.vue';
 import NoShowCalculator from '@/components/marketing/NoShowCalculator.vue';
+import PricingSection from '@/components/marketing/PricingSection.vue';
 import SiteFooter from '@/components/marketing/SiteFooter.vue';
 import SiteHeader from '@/components/marketing/SiteHeader.vue';
 import { useSmoothScroll } from '@/composables/useSmoothScroll';
 
 useSmoothScroll();
+
+const links = [
+    { label: 'How it works', href: '#how-it-works' },
+    { label: 'Features', href: '#features' },
+    { label: 'No-shows', href: '#no-shows' },
+    { label: 'Pricing', href: '#pricing' },
+    { label: 'Questions', href: '#questions' },
+];
 </script>
 
 <template>
@@ -19,7 +30,7 @@ useSmoothScroll();
         />
     </Head>
 
-    <SiteHeader />
+    <SiteHeader :links="links" />
 
     <main>
         <HeroSection />
@@ -69,6 +80,12 @@ useSmoothScroll();
                 <NoShowCalculator />
             </div>
         </section>
+
+        <PricingSection />
+
+        <FaqSection />
+
+        <ClosingCta />
     </main>
 
     <SiteFooter />

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\DepositType;
+use App\Tenancy\CurrentBusiness;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -14,6 +15,12 @@ use Illuminate\Validation\Validator;
  */
 class ServiceRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        // Unticking everyone sends no staff_ids at all.
+        $this->mergeIfMissing(['staff_ids' => []]);
+    }
+
     /**
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -34,6 +41,12 @@ class ServiceRequest extends FormRequest
                 'decimal:0,2',
             ],
             'is_active' => ['boolean'],
+            'staff_ids' => ['array'],
+            'staff_ids.*' => [
+                'integer',
+                'distinct',
+                Rule::exists('staff', 'id')->where('business_id', app(CurrentBusiness::class)->id()),
+            ],
         ];
     }
 
@@ -86,6 +99,14 @@ class ServiceRequest extends FormRequest
             },
             'is_active' => (bool) ($data['is_active'] ?? true),
         ];
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function staffIds(): array
+    {
+        return array_map('intval', array_values((array) $this->validated('staff_ids', [])));
     }
 
     private static function toMinorUnits(mixed $amount): int

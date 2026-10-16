@@ -14,4 +14,8 @@ export type Service = {
     is_active: boolean;
     /** Minor units, worked out by the server. Only on the list page. */
     deposit?: number;
+    /** How many people offer it. Only on the list page. */
+    staff_count?: number;
+    /** Who offers it. Only on the edit page. */
+    staff_ids?: number[];
 };

@@ -80,6 +80,12 @@ function remove(service: Service): void {
                         <Badge v-if="!service.is_active" variant="secondary"
                             >Hidden</Badge
                         >
+                        <Badge
+                            v-else-if="service.staff_count === 0"
+                            variant="outline"
+                            class="border-destructive/40 text-destructive"
+                            >No one offers this</Badge
+                        >
                     </p>
                     <p
                         class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground"

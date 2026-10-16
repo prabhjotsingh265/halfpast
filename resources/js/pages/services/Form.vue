@@ -2,6 +2,7 @@
 import { Form, Head, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
+import MemberAvatar from '@/components/staff/MemberAvatar.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,10 +11,12 @@ import { Spinner } from '@/components/ui/spinner';
 import { currencySymbol, formatMoney, toMajorInput } from '@/lib/money';
 import { duration as durationLabel } from '@/lib/time';
 import type { DepositType, Service } from '@/types/service';
+import type { StaffOption } from '@/types/staff';
 
 const props = defineProps<{
     service: Service | null;
     currency: string;
+    staff: StaffOption[];
 }>();
 
 defineOptions({
@@ -40,6 +43,11 @@ const depositValue = ref(
             : '',
 );
 const isActive = ref(props.service?.is_active ?? true);
+// A new service starts with everyone taking bookings ticked.
+const staffIds = ref<number[]>(
+    props.service?.staff_ids ??
+        props.staff.filter((m) => m.is_active).map((m) => m.id),
+);
 
 const durations = [15, 20, 30, 45, 60, 75, 90, 120, 150, 180, 240];
 const buffers = [0, 5, 10, 15, 20, 30, 45, 60];
@@ -251,6 +259,40 @@ const depositPreview = computed(() => {
                 <InputError
                     :message="errors.deposit_value || errors.deposit_type"
                 />
+            </fieldset>
+
+            <fieldset class="grid gap-3">
+                <legend class="text-sm font-medium">Who does this</legend>
+                <p
+                    v-if="staff.length === 0"
+                    class="text-sm text-muted-foreground"
+                >
+                    No one is on the team yet.
+                    <Link
+                        :href="route('staff.create')"
+                        class="font-medium text-foreground underline underline-offset-4"
+                        >Add someone</Link
+                    >
+                    so customers have a person to book.
+                </p>
+                <div v-else class="flex flex-wrap gap-2">
+                    <label
+                        v-for="member in staff"
+                        :key="member.id"
+                        class="flex cursor-pointer items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-sm transition-colors select-none hover:bg-accent has-[:checked]:border-sun-deep/50 has-[:checked]:bg-sun/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
+                    >
+                        <input
+                            v-model="staffIds"
+                            type="checkbox"
+                            name="staff_ids[]"
+                            :value="member.id"
+                            class="sr-only"
+                        />
+                        <MemberAvatar :name="member.name" size="xs" />
+                        {{ member.name }}
+                    </label>
+                </div>
+                <InputError :message="errors.staff_ids" />
             </fieldset>
 
             <label class="flex items-center gap-3 text-sm">

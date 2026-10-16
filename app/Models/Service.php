@@ -8,6 +8,7 @@ use Database\Factories\ServiceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -54,6 +55,16 @@ class Service extends Model
             'deposit_type' => DepositType::class,
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * The people who offer it.
+     *
+     * @return BelongsToMany<Staff, $this>
+     */
+    public function staff(): BelongsToMany
+    {
+        return $this->belongsToMany(Staff::class);
     }
 
     /**

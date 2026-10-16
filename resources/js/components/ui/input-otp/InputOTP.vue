@@ -1,28 +1,49 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue"
-import type { OTPInputEmits, OTPInputProps } from "vue-input-otp"
-import { reactiveOmit } from "@vueuse/core"
-import { useForwardPropsEmits } from "reka-ui"
-import { OTPInput } from "vue-input-otp"
+import type { ComponentPublicInstance, HTMLAttributes } from "vue"
+import { PinInputRoot } from "reka-ui"
+import { computed, onMounted, useTemplateRef } from "vue"
 import { cn } from "@/lib/utils"
 
-const props = defineProps<OTPInputProps & { class?: HTMLAttributes["class"] }>()
+const props = withDefaults(defineProps<{
+  maxlength?: number
+  disabled?: boolean
+  autofocus?: boolean
+  class?: HTMLAttributes["class"]
+}>(), {
+  maxlength: 6,
+  disabled: false,
+  autofocus: false,
+})
 
-const emits = defineEmits<OTPInputEmits>()
+const model = defineModel<string>({ default: "" })
 
-const delegatedProps = reactiveOmit(props, "class")
+// Reka keeps one array entry per box; the forms post the code as a plain string.
+const digits = computed<number[]>({
+  get: () => model.value.split("").map(Number),
+  set: value => {
+    model.value = value.join("").slice(0, props.maxlength)
+  },
+})
 
-const forwarded = useForwardPropsEmits(delegatedProps, emits)
+const root = useTemplateRef<ComponentPublicInstance>("root")
+
+onMounted(() => {
+  if (props.autofocus) {
+    (root.value?.$el as HTMLElement | undefined)?.querySelector("input")?.focus()
+  }
+})
 </script>
 
 <template>
-  <OTPInput
-    v-slot="slotProps"
-    v-bind="forwarded"
-    :container-class="cn('flex items-center gap-2 has-disabled:opacity-50', props.class)"
+  <PinInputRoot
+    ref="root"
+    v-model="digits"
+    type="number"
+    otp
+    :disabled="disabled"
     data-slot="input-otp"
-    class="disabled:cursor-not-allowed"
+    :class="cn('flex items-center gap-2 has-disabled:opacity-50', props.class)"
   >
-    <slot v-bind="slotProps" />
-  </OTPInput>
+    <slot />
+  </PinInputRoot>
 </template>

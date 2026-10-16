@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/vue3';
 import DayScroll from '@/components/marketing/DayScroll.vue';
 import FeaturesSection from '@/components/marketing/FeaturesSection.vue';
 import HeroSection from '@/components/marketing/HeroSection.vue';
+import NoShowCalculator from '@/components/marketing/NoShowCalculator.vue';
 import SiteFooter from '@/components/marketing/SiteFooter.vue';
 import SiteHeader from '@/components/marketing/SiteHeader.vue';
 import { useSmoothScroll } from '@/composables/useSmoothScroll';
@@ -49,6 +50,25 @@ useSmoothScroll();
         <DayScroll />
 
         <FeaturesSection />
+
+        <section id="no-shows" class="scroll-mt-20 bg-muted px-5 py-24 md:px-8">
+            <div class="mx-auto max-w-6xl">
+                <p
+                    class="text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+                >
+                    What no-shows cost
+                </p>
+                <h2
+                    class="mt-3 max-w-3xl text-4xl font-[800] font-casual md:text-5xl"
+                >
+                    Count the empty chairs.
+                </h2>
+                <p class="mt-4 mb-12 max-w-2xl text-lg text-muted-foreground">
+                    Move the sliders to match your week.
+                </p>
+                <NoShowCalculator />
+            </div>
+        </section>
     </main>
 
     <SiteFooter />

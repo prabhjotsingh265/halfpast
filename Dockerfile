@@ -22,7 +22,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # bind mount (vendor, node_modules, logs) aren't owned by root on Linux.
 RUN if ! getent group "${GID}" > /dev/null; then groupadd --gid "${GID}" app; fi \
     && useradd --uid "${UID}" --gid "${GID}" --create-home --shell /bin/bash app \
-    && chown -R "${UID}:${GID}" /data/caddy /config/caddy
+    && chown -R "${UID}:${GID}" /data /config
 
 WORKDIR /app
 

@@ -3,6 +3,7 @@
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\TimeOffController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'marketing/Home')->name('home');
@@ -21,6 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::middleware('can:manage-business')->group(function () {
             Route::resource('services', ServiceController::class)->except('show');
             Route::resource('staff', StaffController::class)->except('show');
+            Route::resource('time-off', TimeOffController::class)->only(['index', 'store', 'destroy']);
         });
     });
 });

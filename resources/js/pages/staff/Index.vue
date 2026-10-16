@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Pencil, Plus, Trash2, Users } from '@lucide/vue';
+import { CalendarOff, Pencil, Plus, Trash2, Users } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import MemberAvatar from '@/components/staff/MemberAvatar.vue';
 import WeekStrip from '@/components/staff/WeekStrip.vue';
@@ -109,6 +109,22 @@ function remove(member: StaffMember): void {
                         </p>
                     </div>
                     <div class="flex gap-1">
+                        <Button
+                            as-child
+                            variant="ghost"
+                            size="icon"
+                            :aria-label="`Time off for ${member.name}`"
+                        >
+                            <Link
+                                :href="
+                                    route('time-off.index', {
+                                        staff: member.id,
+                                    })
+                                "
+                            >
+                                <CalendarOff class="size-4" />
+                            </Link>
+                        </Button>
                         <Button
                             as-child
                             variant="ghost"

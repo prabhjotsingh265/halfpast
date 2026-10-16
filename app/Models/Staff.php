@@ -62,6 +62,14 @@ class Staff extends Model
     }
 
     /**
+     * @return HasMany<TimeOff, $this>
+     */
+    public function timeOff(): HasMany
+    {
+        return $this->hasMany(TimeOff::class);
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo

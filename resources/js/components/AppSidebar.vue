@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Tags, Users } from '@lucide/vue';
+import { CalendarOff, LayoutGrid, Tags, Users } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -29,6 +29,11 @@ const mainNavItems = computed<NavItem[]>(() => [
         ? [
               { title: 'Services', href: route('services.index'), icon: Tags },
               { title: 'Team', href: route('staff.index'), icon: Users },
+              {
+                  title: 'Time off',
+                  href: route('time-off.index'),
+                  icon: CalendarOff,
+              },
           ]
         : []),
 ]);

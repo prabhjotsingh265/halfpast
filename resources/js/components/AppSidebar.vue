@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { LayoutGrid } from '@lucide/vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { LayoutGrid, Tags } from '@lucide/vue';
+import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -15,13 +16,19 @@ import {
 } from '@/components/ui/sidebar';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+const page = usePage();
+
+const mainNavItems = computed<NavItem[]>(() => [
     {
         title: 'Dashboard',
         href: route('dashboard'),
         icon: LayoutGrid,
     },
-];
+    // Setting up what's sold and who works there is for owners.
+    ...(page.props.business?.role === 'owner'
+        ? [{ title: 'Services', href: route('services.index'), icon: Tags }]
+        : []),
+]);
 </script>
 
 <template>

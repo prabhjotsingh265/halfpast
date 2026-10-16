@@ -23,12 +23,12 @@ class SetCurrentBusiness
     {
         $user = $request->user();
 
-        if ($user instanceof User && $this->current->get() === null) {
+        if ($user instanceof User) {
             $business = $this->resolve($request, $user);
+            $this->current->set($business);
 
             if ($business !== null) {
                 $request->session()->put(self::SESSION_KEY, $business->id);
-                $this->current->set($business);
             }
         }
 

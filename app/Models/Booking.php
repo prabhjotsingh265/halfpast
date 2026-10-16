@@ -1,0 +1,162 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\BookingStatus;
+use App\Tenancy\BelongsToBusiness;
+use Carbon\CarbonImmutable;
+use Database\Factories\BookingFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
+
+/**
+ * An appointment, from the moment a customer holds a time onwards.
+ *
+ * @property int $id
+ * @property int $business_id
+ * @property int|null $service_id
+ * @property int|null $staff_id
+ * @property int|null $customer_id
+ * @property string $service_name
+ * @property CarbonImmutable $starts_at
+ * @property CarbonImmutable $ends_at
+ * @property CarbonImmutable $blocked_until
+ * @property BookingStatus $status
+ * @property CarbonImmutable|null $hold_expires_at
+ * @property string $source
+ * @property int $price
+ * @property int $deposit
+ * @property string $currency
+ * @property string $code
+ * @property string|null $notes
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
+ */
+#[Fillable([
+    'service_id',
+    'staff_id',
+    'customer_id',
+    'service_name',
+    'starts_at',
+    'ends_at',
+    'blocked_until',
+    'status',
+    'hold_expires_at',
+    'source',
+    'price',
+    'deposit',
+    'currency',
+    'code',
+    'notes',
+])]
+class Booking extends Model
+{
+    use BelongsToBusiness;
+
+    /** @use HasFactory<BookingFactory> */
+    use HasFactory;
+
+    /** PostgreSQL's code for a row refused by an exclusion constraint. */
+    public const OVERLAP_ERROR = '23P01';
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'status' => BookingStatus::class,
+            'starts_at' => 'immutable_datetime',
+            'ends_at' => 'immutable_datetime',
+            'blocked_until' => 'immutable_datetime',
+            'hold_expires_at' => 'immutable_datetime',
+            'created_at' => 'immutable_datetime',
+            'updated_at' => 'immutable_datetime',
+        ];
+    }
+
+    /**
+     * Ten characters from an alphabet without look-alikes (no 0/O, 1/I/L),
+     * so the code can be read out over the phone.
+     */
+    public static function newCode(): string
+    {
+        $alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+        return implode('', array_map(
+            fn () => $alphabet[random_int(0, strlen($alphabet) - 1)],
+            range(1, 10),
+        ));
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Booking $booking): void {
+            $booking->code ??= self::newCode();
+        });
+    }
+
+    /**
+     * Bookings that take up time right now: confirmed ones, and holds that
+     * haven't run out yet.
+     *
+     * @param  Builder<Booking>  $query
+     */
+    public function scopeTakingTime(Builder $query, ?CarbonImmutable $at = null): void
+    {
+        $at ??= CarbonImmutable::now();
+
+        $query->where(function (Builder $query) use ($at) {
+            $query->where('status', BookingStatus::Confirmed)
+                ->orWhere(fn (Builder $query) => $query
+                    ->where('status', BookingStatus::Held)
+                    ->where('hold_expires_at', '>', $at));
+        });
+    }
+
+    public function isHeld(): bool
+    {
+        return $this->status === BookingStatus::Held
+            && $this->hold_expires_at !== null
+            && $this->hold_expires_at->isFuture();
+    }
+
+    /**
+     * @return BelongsTo<Service, $this>
+     */
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
+    }
+
+    /**
+     * @return BelongsTo<Staff, $this>
+     */
+    public function staff(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class);
+    }
+
+    /**
+     * @return BelongsTo<Customer, $this>
+     */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'code';
+    }
+
+    /** Readable in a list: "7K2Q-9XMB-AT". */
+    public function displayCode(): string
+    {
+        return implode('-', str_split(Str::upper($this->code), 4));
+    }
+}

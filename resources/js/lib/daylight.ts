@@ -65,3 +65,21 @@ export function daylight(
 
     return `oklch(${l.toFixed(3)} ${c.toFixed(3)} ${h.toFixed(1)})`;
 }
+
+/**
+ * CSS custom properties for a block running from one hour to another, in both
+ * modes, so a gradient can follow the theme without knowing it:
+ * bg-[linear-gradient(90deg,var(--from),var(--to))]
+ * dark:bg-[linear-gradient(90deg,var(--from-dark),var(--to-dark))]
+ */
+export function daylightRange(
+    fromHour: number,
+    toHour: number,
+): Record<string, string> {
+    return {
+        '--from': daylight(fromHour),
+        '--to': daylight(toHour),
+        '--from-dark': daylight(fromHour, 'dark'),
+        '--to-dark': daylight(toHour, 'dark'),
+    };
+}

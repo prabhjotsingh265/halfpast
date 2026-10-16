@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Tags } from '@lucide/vue';
+import { LayoutGrid, Tags, Users } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -26,7 +26,10 @@ const mainNavItems = computed<NavItem[]>(() => [
     },
     // Setting up what's sold and who works there is for owners.
     ...(page.props.business?.role === 'owner'
-        ? [{ title: 'Services', href: route('services.index'), icon: Tags }]
+        ? [
+              { title: 'Services', href: route('services.index'), icon: Tags },
+              { title: 'Team', href: route('staff.index'), icon: Users },
+          ]
         : []),
 ]);
 </script>

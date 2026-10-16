@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\StaffController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'marketing/Home')->name('home');
@@ -19,6 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Only owners set up what the business sells and who works there.
         Route::middleware('can:manage-business')->group(function () {
             Route::resource('services', ServiceController::class)->except('show');
+            Route::resource('staff', StaffController::class)->except('show');
         });
     });
 });

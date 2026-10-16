@@ -42,6 +42,14 @@ it('creates the business with the person as its owner', function () {
         ->and($business->currency)->toBe('INR')
         ->and($user->roleIn($business))->toBe(BusinessRole::Owner);
 
+    // The owner is the first person customers can book, on office hours.
+    $staff = $business->staff()->with('workingHours')->sole();
+
+    expect($staff->user_id)->toBe($user->id)
+        ->and($staff->name)->toBe($user->name)
+        ->and($staff->workingHours)->toHaveCount(5)
+        ->and($staff->workingHours->pluck('weekday')->all())->toBe([1, 2, 3, 4, 5]);
+
     $this->get(route('dashboard'))->assertOk();
 });
 

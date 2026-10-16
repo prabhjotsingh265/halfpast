@@ -127,7 +127,7 @@ onBeforeUnmount(() => window.clearInterval(timer));
         />
 
         <div
-            class="relative h-[36rem] [scrollbar-width:none] overflow-y-auto rounded-[2.2rem]"
+            class="relative h-[38rem] [scrollbar-width:none] overflow-y-auto rounded-[2.2rem]"
         >
             <Transition name="screen" mode="out-in">
                 <!-- Picking a time -->
@@ -147,12 +147,12 @@ onBeforeUnmount(() => window.clearInterval(timer));
                     </div>
 
                     <p
-                        class="mt-5 text-[0.7rem] font-semibold tracking-wide text-muted-foreground uppercase"
+                        class="mt-4 text-[0.7rem] font-semibold tracking-wide text-muted-foreground uppercase"
                     >
                         Service
                     </p>
                     <div
-                        class="mt-2 space-y-2"
+                        class="mt-2 space-y-1.5"
                         role="radiogroup"
                         aria-label="Service"
                     >
@@ -162,7 +162,7 @@ onBeforeUnmount(() => window.clearInterval(timer));
                             type="button"
                             role="radio"
                             :aria-checked="serviceIndex === index"
-                            class="flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left transition-[border-color,box-shadow]"
+                            class="flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left transition-[border-color,box-shadow]"
                             :class="
                                 serviceIndex === index
                                     ? 'border-foreground shadow-[inset_0_0_0_1px_var(--ink)]'
@@ -188,7 +188,7 @@ onBeforeUnmount(() => window.clearInterval(timer));
                     </div>
 
                     <p
-                        class="mt-5 text-[0.7rem] font-semibold tracking-wide text-muted-foreground uppercase"
+                        class="mt-4 text-[0.7rem] font-semibold tracking-wide text-muted-foreground uppercase"
                     >
                         Day
                     </p>
@@ -219,7 +219,7 @@ onBeforeUnmount(() => window.clearInterval(timer));
                     </div>
 
                     <p
-                        class="mt-5 text-[0.7rem] font-semibold tracking-wide text-muted-foreground uppercase"
+                        class="mt-4 text-[0.7rem] font-semibold tracking-wide text-muted-foreground uppercase"
                     >
                         Time
                     </p>

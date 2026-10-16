@@ -16,7 +16,9 @@ return [
     */
 
     'ssr' => [
-        'enabled' => true,
+        // Off for now: pages call Ziggy's route() as they load, and that only
+        // exists in the browser, so every server render failed and fell back.
+        'enabled' => (bool) env('INERTIA_SSR_ENABLED', false),
         'url' => 'http://127.0.0.1:13714',
         // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
 

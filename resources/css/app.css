@@ -7,15 +7,35 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+  Recursive is one variable font with a sans-to-mono axis (MONO) and a casual
+  axis (CASL). Each element reads the two custom properties below, so a
+  utility can switch an axis for one element, and a transition can animate it.
+*/
+@property --mono {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+}
+
+@property --casl {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+}
+
 @theme inline {
     --font-sans:
-        Instrument Sans, ui-sans-serif, system-ui, sans-serif,
+        'Recursive Variable', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+    --font-mono:
+        'Recursive Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-    --radius-lg: var(--radius);
-    --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 6px);
 
     --color-background: var(--background);
     --color-foreground: var(--foreground);
@@ -41,9 +61,22 @@
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
 
+    --color-success: var(--success);
+
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
+
+    --color-sun: var(--sun);
+    --color-sun-deep: var(--sun-deep);
+    --color-dusk: var(--dusk);
+
+    --color-daylight-06: var(--daylight-06);
+    --color-daylight-09: var(--daylight-09);
+    --color-daylight-12: var(--daylight-12);
+    --color-daylight-15: var(--daylight-15);
+    --color-daylight-18: var(--daylight-18);
+    --color-daylight-21: var(--daylight-21);
 
     --color-chart-1: var(--chart-1);
     --color-chart-2: var(--chart-2);
@@ -62,111 +95,126 @@
 }
 
 /*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
+  Halfpast palette. Every text colour is checked against WCAG AA: ink on any
+  daylight tint is at least 12:1, secondary text 7.1:1, links 5.6:1.
 */
-@layer base {
-    *,
-    ::after,
-    ::before,
-    ::backdrop,
-    ::file-selector-button {
-        border-color: var(--color-gray-200, currentColor);
-    }
-}
-
-@layer utilities {
-    body,
-    html {
-        --font-sans:
-            'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-            'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-            'Noto Color Emoji';
-    }
-}
-
 :root {
-    --background: hsl(0 0% 100%);
-    --foreground: hsl(0 0% 3.9%);
-    --card: hsl(0 0% 100%);
-    --card-foreground: hsl(0 0% 3.9%);
-    --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(0 0% 3.9%);
-    --primary: hsl(0 0% 9%);
-    --primary-foreground: hsl(0 0% 98%);
-    --secondary: hsl(0 0% 92.1%);
-    --secondary-foreground: hsl(0 0% 9%);
-    --muted: hsl(0 0% 96.1%);
-    --muted-foreground: hsl(0 0% 45.1%);
-    --accent: hsl(0 0% 96.1%);
-    --accent-foreground: hsl(0 0% 9%);
-    --destructive: hsl(0 84.2% 60.2%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 92.8%);
-    --input: hsl(0 0% 89.8%);
-    --ring: hsl(0 0% 3.9%);
-    --chart-1: hsl(12 76% 61%);
-    --chart-2: hsl(173 58% 39%);
-    --chart-3: hsl(197 37% 24%);
-    --chart-4: hsl(43 74% 66%);
-    --chart-5: hsl(27 87% 67%);
-    --radius: 0.5rem;
-    --sidebar-background: hsl(0 0% 98%);
-    --sidebar-foreground: hsl(240 5.3% 26.1%);
-    --sidebar-primary: hsl(0 0% 10%);
-    --sidebar-primary-foreground: hsl(0 0% 98%);
-    --sidebar-accent: hsl(0 0% 94%);
-    --sidebar-accent-foreground: hsl(0 0% 30%);
-    --sidebar-border: hsl(0 0% 91%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(0 0% 98%);
+    --ink: oklch(0.21 0.015 265);
+    --ink-2: oklch(0.45 0.015 265);
+    --line: oklch(0.9 0.008 265);
+    --paper: oklch(0.985 0.004 85);
+    --surface: oklch(0.965 0.006 85);
+    --sun: oklch(0.74 0.155 62);
+    --sun-deep: oklch(0.52 0.13 50);
+    --dusk: oklch(0.3 0.07 285);
+    --success: oklch(0.52 0.12 155);
+
+    /* Slot tints by the hour they start at; resources/js/lib/daylight.ts blends between them. */
+    --daylight-06: oklch(0.93 0.032 20);
+    --daylight-09: oklch(0.95 0.05 90);
+    --daylight-12: oklch(0.95 0.035 210);
+    --daylight-15: oklch(0.93 0.033 240);
+    --daylight-18: oklch(0.91 0.052 55);
+    --daylight-21: oklch(0.88 0.045 290);
+
+    --background: var(--paper);
+    --foreground: var(--ink);
+    --card: var(--paper);
+    --card-foreground: var(--ink);
+    --popover: var(--paper);
+    --popover-foreground: var(--ink);
+    --primary: var(--sun);
+    --primary-foreground: var(--ink);
+    --secondary: var(--surface);
+    --secondary-foreground: var(--ink);
+    --muted: var(--surface);
+    --muted-foreground: var(--ink-2);
+    --accent: oklch(0.945 0.008 85);
+    --accent-foreground: var(--ink);
+    --destructive: oklch(0.55 0.19 27);
+    --destructive-foreground: var(--paper);
+    --border: var(--line);
+    --input: var(--line);
+    --ring: var(--sun-deep);
+    --chart-1: var(--sun-deep);
+    --chart-2: oklch(0.55 0.1 210);
+    --chart-3: oklch(0.5 0.1 290);
+    --chart-4: var(--success);
+    --chart-5: oklch(0.6 0.12 20);
+    --radius: 0.625rem;
+    --sidebar-background: var(--surface);
+    --sidebar-foreground: var(--ink);
+    --sidebar-primary: var(--sun);
+    --sidebar-primary-foreground: var(--ink);
+    --sidebar-accent: oklch(0.935 0.008 85);
+    --sidebar-accent-foreground: var(--ink);
+    --sidebar-border: var(--line);
+    --sidebar-ring: var(--sun-deep);
+    --sidebar: var(--surface);
 }
 
 .dark {
-    --background: hsl(0 0% 3.9%);
-    --foreground: hsl(0 0% 98%);
-    --card: hsl(0 0% 3.9%);
-    --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(0 0% 3.9%);
-    --popover-foreground: hsl(0 0% 98%);
-    --primary: hsl(0 0% 98%);
-    --primary-foreground: hsl(0 0% 9%);
-    --secondary: hsl(0 0% 14.9%);
-    --secondary-foreground: hsl(0 0% 98%);
-    --muted: hsl(0 0% 16.08%);
-    --muted-foreground: hsl(0 0% 63.9%);
-    --accent: hsl(0 0% 14.9%);
-    --accent-foreground: hsl(0 0% 98%);
-    --destructive: hsl(0 84% 60%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 14.9%);
-    --input: hsl(0 0% 14.9%);
-    --ring: hsl(0 0% 83.1%);
-    --chart-1: hsl(220 70% 50%);
-    --chart-2: hsl(160 60% 45%);
-    --chart-3: hsl(30 80% 55%);
-    --chart-4: hsl(280 65% 60%);
-    --chart-5: hsl(340 75% 55%);
-    --sidebar-background: hsl(0 0% 7%);
-    --sidebar-foreground: hsl(0 0% 95.9%);
-    --sidebar-primary: hsl(360, 100%, 100%);
-    --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(0 0% 15.9%);
-    --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-border: hsl(0 0% 15.9%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(240 5.9% 10%);
+    --ink: oklch(0.95 0.006 85);
+    --ink-2: oklch(0.72 0.012 85);
+    --line: oklch(0.3 0.012 265);
+    --paper: oklch(0.18 0.012 265);
+    --surface: oklch(0.23 0.014 265);
+    --sun-deep: oklch(0.78 0.13 62);
+    --success: oklch(0.72 0.13 155);
+
+    --daylight-06: oklch(0.29 0.045 20);
+    --daylight-09: oklch(0.29 0.045 90);
+    --daylight-12: oklch(0.29 0.045 210);
+    --daylight-15: oklch(0.29 0.045 240);
+    --daylight-18: oklch(0.29 0.045 55);
+    --daylight-21: oklch(0.29 0.045 290);
+
+    /* Sun stays the same in both modes, so text on it stays dark ink. */
+    --primary-foreground: oklch(0.21 0.015 265);
+    --accent: oklch(0.27 0.014 265);
+    --destructive: oklch(0.68 0.17 27);
+    --destructive-foreground: oklch(0.18 0.012 265);
+    --chart-2: oklch(0.72 0.1 210);
+    --chart-3: oklch(0.72 0.1 290);
+    --chart-5: oklch(0.75 0.12 20);
+    --sidebar-background: oklch(0.2 0.012 265);
+    --sidebar-accent: oklch(0.27 0.014 265);
+    --sidebar: oklch(0.2 0.012 265);
 }
 
 @layer base {
     * {
         @apply border-border outline-ring/50;
     }
+
+    *,
+    ::before,
+    ::after {
+        font-variation-settings:
+            'MONO' var(--mono),
+            'CASL' var(--casl);
+    }
+
     body {
         @apply bg-background text-foreground;
     }
+
+    code,
+    kbd,
+    samp,
+    pre,
+    .font-mono {
+        --mono: 1;
+    }
+}
+
+/* Times and prices: monospaced digits that line up in columns. */
+@utility font-time {
+    --mono: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Warmer letterforms for marketing headlines. */
+@utility font-casual {
+    --casl: 1;
 }

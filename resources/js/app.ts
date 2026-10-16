@@ -1,3 +1,4 @@
+import '@fontsource-variable/recursive/full.css';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from '@/composables/useAppearance';
@@ -34,7 +35,7 @@ void createInertiaApp({
         });
     },
     progress: {
-        color: '#4B5563',
+        color: '#A24E10',
     },
 });
 

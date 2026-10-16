@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Tenancy\CurrentBusiness;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // One per request (and per queued job), so a business never leaks into the next one.
+        $this->app->scoped(CurrentBusiness::class);
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
+use App\Tenancy\CurrentBusiness;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -42,6 +44,31 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'business' => fn () => $this->currentBusiness($request),
+        ];
+    }
+
+    /**
+     * The business the dashboard is showing, for the header and navigation.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function currentBusiness(Request $request): ?array
+    {
+        $business = app(CurrentBusiness::class)->get();
+        $user = $request->user();
+
+        if ($business === null || ! $user instanceof User) {
+            return null;
+        }
+
+        return [
+            'id' => $business->id,
+            'name' => $business->name,
+            'slug' => $business->slug,
+            'timezone' => $business->timezone,
+            'currency' => $business->currency,
+            'role' => $user->roleIn($business)?->value,
         ];
     }
 }

@@ -1,6 +1,7 @@
 import type { Directive } from 'vue';
 import type { route as ziggyRoute } from 'ziggy-js';
 import type { Auth } from '@/types/auth';
+import type { CurrentBusiness } from '@/types/business';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -27,6 +28,7 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            business: CurrentBusiness | null;
             [key: string]: unknown;
         };
     }

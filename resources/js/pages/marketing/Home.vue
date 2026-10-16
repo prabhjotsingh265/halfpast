@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import DayScroll from '@/components/marketing/DayScroll.vue';
+import FeaturesSection from '@/components/marketing/FeaturesSection.vue';
 import HeroSection from '@/components/marketing/HeroSection.vue';
 import SiteFooter from '@/components/marketing/SiteFooter.vue';
 import SiteHeader from '@/components/marketing/SiteHeader.vue';
@@ -46,6 +47,8 @@ useSmoothScroll();
         </section>
 
         <DayScroll />
+
+        <FeaturesSection />
     </main>
 
     <SiteFooter />

@@ -41,9 +41,7 @@ export default defineConfig({
             host: 'localhost',
         },
         watch: {
-            ignored: [
-                '**/vendor/**',
-            ],
+            ignored: ['**/vendor/**'],
         },
     },
     lint: {

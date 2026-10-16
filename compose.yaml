@@ -2,68 +2,72 @@ name: halfpast
 
 # Shared by every container that runs the Laravel code.
 x-app: &app
-  image: halfpast-app:dev
-  build:
-    context: .
-    target: dev
-    args:
-      UID: ${HOST_UID:-1000}
-      GID: ${HOST_GID:-1000}
-  volumes:
-    - .:/app
-  depends_on:
-    postgres:
-      condition: service_healthy
-    redis:
-      condition: service_healthy
+    image: halfpast-app:dev
+    build:
+        context: .
+        target: dev
+        args:
+            UID: ${HOST_UID:-1000}
+            GID: ${HOST_GID:-1000}
+    volumes:
+        - .:/app
+    depends_on:
+        postgres:
+            condition: service_healthy
+        redis:
+            condition: service_healthy
 
 services:
-  app:
-    <<: *app
-    ports:
-      - "${APP_PORT:-8000}:8000"
+    app:
+        <<: *app
+        ports:
+            - '${APP_PORT:-8000}:8000'
 
-  vite:
-    <<: *app
-    command: ["npm", "run", "dev"]
-    ports:
-      - "${VITE_PORT:-5173}:5173"
-    # The image's health check probes FrankenPHP, which this container doesn't run.
-    healthcheck:
-      disable: true
+    vite:
+        <<: *app
+        command: ['npm', 'run', 'dev']
+        ports:
+            - '${VITE_PORT:-5173}:5173'
+        # The image's health check probes FrankenPHP, which this container doesn't run.
+        healthcheck:
+            disable: true
 
-  postgres:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_DB: ${DB_DATABASE:-halfpast}
-      POSTGRES_USER: ${DB_USERNAME:-halfpast}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
-    volumes:
-      - postgres:/var/lib/postgresql/data
-      - ./docker/postgres/create-test-database.sql:/docker-entrypoint-initdb.d/10-create-test-database.sql:ro
-    ports:
-      - "${FORWARD_DB_PORT:-55432}:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+    postgres:
+        image: postgres:17-alpine
+        environment:
+            POSTGRES_DB: ${DB_DATABASE:-halfpast}
+            POSTGRES_USER: ${DB_USERNAME:-halfpast}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+        volumes:
+            - postgres:/var/lib/postgresql/data
+            - ./docker/postgres/create-test-database.sql:/docker-entrypoint-initdb.d/10-create-test-database.sql:ro
+        ports:
+            - '${FORWARD_DB_PORT:-55432}:5432'
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}',
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 10
 
-  redis:
-    image: redis:8-alpine
-    volumes:
-      - redis:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+    redis:
+        image: redis:8-alpine
+        volumes:
+            - redis:/data
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 5s
+            timeout: 5s
+            retries: 10
 
-  mailpit:
-    image: axllent/mailpit:v1.31
-    ports:
-      - "${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025"
+    mailpit:
+        image: axllent/mailpit:v1.31
+        ports:
+            - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
 
 volumes:
-  postgres:
-  redis:
+    postgres:
+    redis:

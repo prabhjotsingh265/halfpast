@@ -73,7 +73,42 @@ export function dateIn(instant: Date, timeZone: string): string {
     }).format(instant);
 }
 
-/** The visitor's own time zone, e.g. "Asia/Kolkata". */
+/**
+ * Old zone names some browsers still report (Chrome says "Asia/Calcutta"),
+ * mapped to the current ones. Kept in step with App\Support\TimeZones.
+ */
+const RENAMED: Record<string, string> = {
+    'Asia/Calcutta': 'Asia/Kolkata',
+    'Asia/Katmandu': 'Asia/Kathmandu',
+    'Asia/Saigon': 'Asia/Ho_Chi_Minh',
+    'Asia/Rangoon': 'Asia/Yangon',
+    'Asia/Ulan_Bator': 'Asia/Ulaanbaatar',
+    'Europe/Kiev': 'Europe/Kyiv',
+    'America/Godthab': 'America/Nuuk',
+    'Atlantic/Faeroe': 'Atlantic/Faroe',
+    'Pacific/Truk': 'Pacific/Chuuk',
+    'Pacific/Ponape': 'Pacific/Pohnpei',
+    'Pacific/Enderbury': 'Pacific/Kanton',
+};
+
+export function currentZoneName(zone: string): string {
+    return RENAMED[zone] ?? zone;
+}
+
+/** The visitor's own time zone, by its current name, e.g. "Asia/Kolkata". */
 export function localZone(): string {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC';
+    return currentZoneName(
+        Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC',
+    );
+}
+
+/** Every time zone the browser knows, by current name, sorted. */
+export function allZones(): string[] {
+    if (typeof Intl.supportedValuesOf !== 'function') {
+        return ['UTC'];
+    }
+
+    return [
+        ...new Set(Intl.supportedValuesOf('timeZone').map(currentZoneName)),
+    ].sort();
 }

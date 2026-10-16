@@ -42,6 +42,9 @@ class Business extends Model
     /** @use HasFactory<BusinessFactory> */
     use HasFactory;
 
+    /** Currencies a business can price in. */
+    public const CURRENCIES = ['GBP', 'USD', 'EUR', 'INR', 'AUD', 'CAD'];
+
     /**
      * Everyone who works here, with their role.
      *

@@ -46,10 +46,6 @@
             "npm install",
             "npm run build"
         ],
-        "dev": [
-            "Composer\\Config::disableProcessTimeout",
-            "@php artisan dev"
-        ],
         "lint": [
             "pint --parallel"
         ],

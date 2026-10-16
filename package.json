@@ -13,7 +13,6 @@
     "dependencies": {
         "@inertiajs/vite": "^3.0.0",
         "@inertiajs/vue3": "^3.0.0",
-        "@laravel/passkeys": "^0.2.0",
         "@lucide/vue": "^1.17.0",
         "@vueuse/core": "^12.8.2",
         "class-variance-authority": "^0.7.1",
@@ -32,14 +31,12 @@
         "@tailwindcss/vite": "^4.1.11",
         "@types/node": "^22.13.5",
         "@vitejs/plugin-vue": "^6.0.0",
-        "concurrently": "^10.0.3",
         "typescript": "^5.2.2",
         "vite": "^8.0.0",
         "vite-plus": "0.3.0",
         "vue-tsc": "^2.2.4"
     },
     "optionalDependencies": {
-        "@laravel/multiplex": "^0.4.1",
         "@rollup/rollup-linux-x64-gnu": "4.9.5",
         "@rollup/rollup-win32-x64-msvc": "4.9.5",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",

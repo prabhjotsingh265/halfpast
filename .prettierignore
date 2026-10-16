@@ -1,0 +1,11 @@
+vendor
+node_modules
+public
+storage
+bootstrap/ssr
+resources/js/components/ui
+resources/views/mail
+.github
+composer.json
+composer.lock
+package-lock.json

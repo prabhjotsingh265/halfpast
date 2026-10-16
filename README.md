@@ -40,4 +40,6 @@ On Windows, run the commands from a WSL 2 terminal.
 
 ## Stack
 
-Laravel 13 · Vue 3 and TypeScript through Inertia 3 · Tailwind CSS 4 · PostgreSQL 17 · Redis 8 · FrankenPHP · Docker
+PHP 8.4 · Laravel 13 · Vue 3 and TypeScript through Inertia 3 · Vite 7 · Tailwind CSS 4 · PostgreSQL 17 · Redis 8.2 · FrankenPHP · Docker
+
+Every dependency is on a release line with a track record that's still supported: no pre-1.0 packages and no brand-new major versions.

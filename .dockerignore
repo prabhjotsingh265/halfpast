@@ -1,0 +1,4 @@
+# The dev image only needs the files under docker/. The app itself is
+# bind-mounted at runtime, so nothing else has to go into the build context.
+*
+!docker/

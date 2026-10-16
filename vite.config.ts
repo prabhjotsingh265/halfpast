@@ -32,6 +32,14 @@ export default defineConfig({
         }),
     ]),
     server: {
+        // Inside Docker the dev server has to listen on every interface.
+        // The browser still reaches it, and hot reload, through localhost.
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: 'localhost',
+        },
         watch: {
             ignored: [
                 '**/vendor/**',

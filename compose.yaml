@@ -39,6 +39,13 @@ services:
         healthcheck:
             disable: true
 
+    # Scheduled tasks, every minute: releasing lapsed holds, reminders later.
+    scheduler:
+        <<: *app
+        command: ['php', 'artisan', 'schedule:work']
+        healthcheck:
+            disable: true
+
     postgres:
         image: postgres:17-alpine
         environment:

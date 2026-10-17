@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Booking\ConfirmBooking;
+use App\Actions\Booking\FindBookableTimes;
+use App\Actions\Booking\HoldTime;
 use App\Enums\BookingStatus;
+use App\Exceptions\TimeNotAvailable;
 use App\Http\Requests\CustomerDetailsRequest;
 use App\Models\Booking;
 use App\Models\Business;
 use App\Models\Customer;
+use App\Models\Service;
+use App\Models\Staff;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +25,8 @@ use Inertia\Response;
  */
 class CheckoutController extends Controller
 {
+    public function __construct(private FindBookableTimes $times, private HoldTime $hold) {}
+
     public function show(Request $request, Business $business, Booking $booking): Response|RedirectResponse
     {
         abort_unless(HoldController::heldBy($request, $booking), 404);
@@ -43,7 +50,7 @@ class CheckoutController extends Controller
                 'currency' => $booking->currency,
                 'held' => $booking->isHeld(),
                 // Lapsed, but nobody has taken the time, so it can still be booked.
-                'renewable' => $booking->status === BookingStatus::Held,
+                'renewable' => $booking->status === BookingStatus::Held || $this->stillFree($business, $booking),
                 'confirmed' => false,
                 'hold_expires_at' => $booking->hold_expires_at?->utc()->toIso8601ZuluString(),
             ],
@@ -71,7 +78,13 @@ class CheckoutController extends Controller
             return redirect()->to($booking->manageUrl());
         }
 
-        if ($booking->status !== BookingStatus::Held) {
+        // The hold was cleared after it ran out. If the time is still free,
+        // hold it again rather than send the customer back to the start.
+        if ($booking->status === BookingStatus::Expired) {
+            $booking = $this->holdAgain($request, $business, $booking);
+        }
+
+        if ($booking === null || $booking->status !== BookingStatus::Held) {
             return back()->withErrors(['booking' => 'Your hold ran out and the time has gone to someone else. Please pick another.']);
         }
 
@@ -99,5 +112,49 @@ class CheckoutController extends Controller
         }
 
         return redirect()->to($booking->manageUrl());
+    }
+
+    /** Whether a cleared hold's time could still be booked, with the same person. */
+    private function stillFree(Business $business, Booking $booking): bool
+    {
+        if ($booking->status !== BookingStatus::Expired) {
+            return false;
+        }
+
+        $service = Service::find($booking->service_id);
+        $staff = Staff::find($booking->staff_id);
+
+        if ($service === null || $staff === null) {
+            return false;
+        }
+
+        $date = $booking->starts_at->setTimezone($business->timezone)->toDateString();
+
+        return collect($this->times->handle($business, $service, $staff, $date, $date))
+            ->contains(fn ($slot) => $slot->start->getTimestamp() === $booking->starts_at->getTimestamp());
+    }
+
+    /**
+     * A fresh hold on the same time with the same person, which becomes the
+     * browser's hold in place of the cleared one. Null if it's been taken.
+     */
+    private function holdAgain(Request $request, Business $business, Booking $expired): ?Booking
+    {
+        $service = Service::find($expired->service_id);
+        $staff = Staff::find($expired->staff_id);
+
+        if ($service === null || $staff === null) {
+            return null;
+        }
+
+        try {
+            $booking = $this->hold->handle($business, $service, $staff, $expired->starts_at);
+        } catch (TimeNotAvailable) {
+            return null;
+        }
+
+        $request->session()->put(HoldController::SESSION_KEY, [$booking->code]);
+
+        return $booking;
     }
 }

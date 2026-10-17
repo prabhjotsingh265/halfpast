@@ -129,9 +129,33 @@ it('still books a lapsed hold if nobody has taken the time', function () {
     expect($booking->fresh()->status)->toBe(BookingStatus::Confirmed);
 });
 
+it('holds the time again if a cleared hold is still free', function () {
+    $booking = holdService($this->trim);
+    $this->travel(15)->minutes();
+    $this->artisan('bookings:expire-holds');
+
+    $this->get("/glow-studio/checkout/{$booking->code}")
+        ->assertInertia(fn (Assert $page) => $page->where('booking.renewable', true));
+
+    $response = $this->post("/glow-studio/checkout/{$booking->code}", details());
+
+    $fresh = Booking::where('status', BookingStatus::Confirmed)->sole();
+    $response->assertRedirect($fresh->manageUrl());
+
+    expect($fresh->id)->not->toBe($booking->id)
+        ->and($fresh->starts_at->equalTo($booking->starts_at))->toBeTrue()
+        ->and($fresh->staff_id)->toBe($booking->staff_id)
+        ->and($booking->fresh()->status)->toBe(BookingStatus::Expired);
+});
+
 it('says so when a lapsed hold went to someone else', function () {
     $booking = holdService($this->trim);
-    $booking->update(['status' => BookingStatus::Expired]);
+    $this->travel(15)->minutes();
+    $this->artisan('bookings:expire-holds');
+    Booking::factory()->for($this->business)->at('2026-10-27 09:00', '2026-10-27 10:00')->create(['staff_id' => $this->priya->id]);
+
+    $this->get("/glow-studio/checkout/{$booking->code}")
+        ->assertInertia(fn (Assert $page) => $page->where('booking.renewable', false));
 
     $this->from("/glow-studio/checkout/{$booking->code}")
         ->post("/glow-studio/checkout/{$booking->code}", details())

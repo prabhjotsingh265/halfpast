@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable|null $authorized_at
  * @property CarbonImmutable|null $captured_at
  * @property CarbonImmutable|null $released_at
+ * @property CarbonImmutable|null $checked_at
  * @property int $refunded_amount
  * @property string|null $release_reason
  * @property string|null $failure_reason
@@ -47,6 +48,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'authorized_at',
     'captured_at',
     'released_at',
+    'checked_at',
     'refunded_amount',
     'release_reason',
     'failure_reason',
@@ -69,6 +71,7 @@ class Payment extends Model
             'authorized_at' => 'immutable_datetime',
             'captured_at' => 'immutable_datetime',
             'released_at' => 'immutable_datetime',
+            'checked_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
         ];

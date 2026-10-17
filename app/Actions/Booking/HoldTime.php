@@ -4,6 +4,7 @@ namespace App\Actions\Booking;
 
 use App\Enums\BookingStatus;
 use App\Exceptions\TimeNotAvailable;
+use App\Jobs\StopUnfinishedCheckouts;
 use App\Models\Booking;
 use App\Models\Business;
 use App\Models\Service;
@@ -54,16 +55,32 @@ class HoldTime
 
     private function hold(Business $business, Service $service, int $staffId, CarbonImmutable $startsAt, CarbonImmutable $now): Booking
     {
+        $endsAt = $startsAt->addMinutes($service->duration_minutes);
+        $blockedUntil = $endsAt->addMinutes($service->buffer_after_minutes);
+
+        $lapsed = Booking::where('business_id', $business->id)
+            ->where('staff_id', $staffId)
+            ->where('status', BookingStatus::Held)
+            ->where('hold_expires_at', '<=', $now);
+
+        // The lapsed holds this one is about to take the time of: their
+        // customers' unfinished checkouts are stopped once this commits.
+        $overlapping = (clone $lapsed)
+            ->where('starts_at', '<', $blockedUntil)
+            ->where('blocked_until', '>', $startsAt)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+
         // Lapsed holds still count for the overlap rule until they're marked
         // expired, so clear this person's straight away rather than waiting
         // for the scheduled clean-up.
-        Booking::where('business_id', $business->id)
-            ->where('staff_id', $staffId)
-            ->where('status', BookingStatus::Held)
-            ->where('hold_expires_at', '<=', $now)
-            ->update(['status' => BookingStatus::Expired]);
+        $lapsed->update(['status' => BookingStatus::Expired]);
 
-        $endsAt = $startsAt->addMinutes($service->duration_minutes);
+        if ($overlapping !== []) {
+            StopUnfinishedCheckouts::dispatch(array_values($overlapping))->afterCommit();
+        }
 
         $booking = new Booking([
             'service_id' => $service->id,
@@ -71,7 +88,7 @@ class HoldTime
             'service_name' => $service->name,
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
-            'blocked_until' => $endsAt->addMinutes($service->buffer_after_minutes),
+            'blocked_until' => $blockedUntil,
             'status' => BookingStatus::Held,
             'hold_expires_at' => $now->addMinutes($business->hold_minutes),
             'source' => 'online',

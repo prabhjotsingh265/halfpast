@@ -217,7 +217,8 @@ class TestGateway implements PaymentGateway
      */
     private function save(string $order, array $state): void
     {
-        Cache::put(self::cacheKey($order), $state, now()->addDay());
+        // Kept as long as a real gateway would remember an order.
+        Cache::put(self::cacheKey($order), $state, now()->addDays(30));
     }
 
     /**

@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property int $booking_horizon_days
  * @property int $cancellation_window_hours
  * @property int $hold_minutes
+ * @property list<string> $payment_gateways
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -37,6 +38,7 @@ use Illuminate\Support\Carbon;
     'booking_horizon_days',
     'cancellation_window_hours',
     'hold_minutes',
+    'payment_gateways',
 ])]
 class Business extends Model
 {
@@ -50,7 +52,7 @@ class Business extends Model
      * The booking rules' defaults, the same as the table's, so a business
      * made in code has them before it's ever reloaded from the database.
      *
-     * @var array<string, int>
+     * @var array<string, int|string>
      */
     protected $attributes = [
         'slot_step_minutes' => 15,
@@ -58,6 +60,7 @@ class Business extends Model
         'booking_horizon_days' => 60,
         'cancellation_window_hours' => 24,
         'hold_minutes' => 15,
+        'payment_gateways' => '[]',
     ];
 
     /**
@@ -89,6 +92,16 @@ class Business extends Model
     public function staff(): HasMany
     {
         return $this->hasMany(Staff::class);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'payment_gateways' => 'array',
+        ];
     }
 
     /** Booking pages are addressed by slug: /glow-studio. */

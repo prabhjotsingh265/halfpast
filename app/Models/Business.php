@@ -85,6 +85,14 @@ class Business extends Model
     }
 
     /**
+     * @return HasMany<Booking, $this>
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    /**
      * The people customers can book.
      *
      * @return HasMany<Staff, $this>

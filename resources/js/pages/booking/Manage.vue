@@ -160,11 +160,18 @@ const headline = computed(
                     data-test="cancelled-note"
                 >
                     {{
-                        booking.cancelled_by === 'business'
-                            ? `${business.name} had to cancel it. Sorry for the trouble.`
-                            : 'The time is free for someone else now.'
+                        booking.cancelled_by === 'system'
+                            ? "We couldn't take your deposit, so the booking didn't go through. You haven't been charged."
+                            : booking.cancelled_by === 'business'
+                              ? `${business.name} had to cancel it. Sorry for the trouble.`
+                              : 'The time is free for someone else now.'
                     }}
-                    <template v-if="booking.deposit > 0">
+                    <template
+                        v-if="
+                            booking.deposit > 0 &&
+                            booking.cancelled_by !== 'system'
+                        "
+                    >
                         {{
                             booking.refund_due > 0
                                 ? `Your ${formatMoney(booking.refund_due, booking.currency)} deposit is being refunded.`

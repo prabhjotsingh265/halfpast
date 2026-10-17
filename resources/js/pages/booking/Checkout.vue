@@ -1,21 +1,40 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ArrowLeft, CreditCard, Pencil, TimerOff } from '@lucide/vue';
+import {
+    ArrowLeft,
+    CircleCheck,
+    CreditCard,
+    Loader,
+    Pencil,
+    TimerOff,
+    TriangleAlert,
+} from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import BookingHeader from '@/components/booking/BookingHeader.vue';
 import DetailsForm from '@/components/booking/DetailsForm.vue';
 import HoldRing from '@/components/booking/HoldRing.vue';
+import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { timeIn, zoneCity } from '@/lib/booking';
 import { formatMoney } from '@/lib/money';
 import { countdown, duration } from '@/lib/time';
 import { localZone } from '@/lib/zones';
-import type { CheckoutBooking, CheckoutCustomer } from '@/types/booking';
+import type {
+    CheckoutBooking,
+    CheckoutCustomer,
+    CheckoutPayment,
+} from '@/types/booking';
 
 const props = defineProps<{
     booking: CheckoutBooking;
     customer: CheckoutCustomer | null;
+    gateways: { key: string; label: string }[];
+    payment: CheckoutPayment | null;
+    cancelled: boolean;
+    returned: boolean;
     holdMinutes: number;
+    paymentWindow: number;
     serverNow: string;
 }>();
 
@@ -30,7 +49,94 @@ onMounted(() => {
     timer = window.setInterval(() => (now.value = Date.now() + skew), 250);
 });
 
-onBeforeUnmount(() => window.clearInterval(timer));
+onBeforeUnmount(() => {
+    window.clearInterval(timer);
+    window.clearTimeout(poll);
+});
+
+const page = usePage();
+const paymentError = computed(() => page.props.errors?.payment ?? null);
+const startingWith = ref<string | null>(null);
+
+/** One message about the last payment, if there's something to say. */
+const notice = computed<{
+    tone: 'good' | 'warn' | 'wait';
+    text: string;
+} | null>(() => {
+    const payment = props.payment;
+    const amount = formatMoney(props.booking.deposit, props.booking.currency);
+
+    if (
+        payment?.outcome === 'slot_taken' ||
+        payment?.outcome === 'not_bookable'
+    ) {
+        return {
+            tone: 'good',
+            text: payment.refunded
+                ? `Your ${amount} is being refunded in full.`
+                : `You haven't been charged. The ${amount} was only reserved and will be released.`,
+        };
+    }
+
+    if (payment?.status === 'failed' && payment.failure_reason === 'declined') {
+        return {
+            tone: 'warn',
+            text: "Your payment didn't go through, and nothing was taken. Try again, or choose another way to pay.",
+        };
+    }
+
+    if (payment?.status === 'pending' && props.returned) {
+        return {
+            tone: 'wait',
+            text: "Checking your payment… If you've paid, this updates by itself in a moment.",
+        };
+    }
+
+    if (props.cancelled) {
+        return {
+            tone: 'warn',
+            text: 'You came back without paying. Your time is still held.',
+        };
+    }
+
+    return null;
+});
+
+// While a payment is being confirmed (UPI can take a little while), look
+// again every few seconds, for up to two minutes.
+let poll = 0;
+let polls = 0;
+
+function watchPayment(): void {
+    if (props.payment?.status !== 'pending' || !props.returned || polls >= 40) {
+        return;
+    }
+
+    poll = window.setTimeout(() => {
+        polls += 1;
+        router.reload({
+            only: ['booking', 'payment'],
+            onFinish: watchPayment,
+        });
+    }, 3000);
+}
+
+onMounted(watchPayment);
+
+function pay(gateway: string): void {
+    startingWith.value = gateway;
+    router.post(
+        route('booking.pay', {
+            business: business.value.slug,
+            booking: props.booking.code,
+        }),
+        { gateway },
+        {
+            preserveScroll: true,
+            onFinish: () => (startingWith.value = null),
+        },
+    );
+}
 
 const secondsLeft = computed(() =>
     props.booking.hold_expires_at
@@ -100,6 +206,33 @@ const againUrl = computed(() =>
             class="mx-auto grid max-w-5xl gap-8 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start"
         >
             <div class="min-w-0 space-y-8">
+                <div
+                    v-if="notice"
+                    class="flex animate-in items-start gap-3 rounded-2xl border p-4 text-sm fade-in"
+                    :class="{
+                        'border-success/30 bg-success/10':
+                            notice.tone === 'good',
+                        'border-sun-deep/30 bg-sun/10': notice.tone === 'warn',
+                        'bg-muted': notice.tone === 'wait',
+                    }"
+                    role="status"
+                    data-test="payment-notice"
+                >
+                    <CircleCheck
+                        v-if="notice.tone === 'good'"
+                        class="mt-0.5 size-4 shrink-0 text-success"
+                    />
+                    <TriangleAlert
+                        v-else-if="notice.tone === 'warn'"
+                        class="mt-0.5 size-4 shrink-0 text-sun-deep"
+                    />
+                    <Loader
+                        v-else
+                        class="mt-0.5 size-4 shrink-0 animate-spin text-muted-foreground"
+                    />
+                    <p>{{ notice.text }}</p>
+                </div>
+
                 <button
                     v-if="held"
                     type="button"
@@ -227,12 +360,36 @@ const againUrl = computed(() =>
                         >
                     </p>
                     <div
+                        v-if="gateways.length === 0"
                         class="flex items-center gap-3 rounded-xl border border-dashed p-4 text-sm text-muted-foreground"
                     >
                         <CreditCard class="size-5 shrink-0" />
-                        Payment options appear here once {{ business.name }}
-                        switches them on.
+                        Online payment isn't available right now. Please contact
+                        {{ business.name }} to book.
                     </div>
+                    <div v-else class="grid gap-2" data-test="gateways">
+                        <Button
+                            v-for="gateway in gateways"
+                            :key="gateway.key"
+                            type="button"
+                            size="lg"
+                            class="w-full rounded-xl"
+                            :disabled="startingWith !== null"
+                            :data-test="`pay-${gateway.key}`"
+                            @click="pay(gateway.key)"
+                        >
+                            <Spinner v-if="startingWith === gateway.key" />
+                            Pay
+                            {{ formatMoney(booking.deposit, booking.currency) }}
+                            · {{ gateway.label }}
+                        </Button>
+                        <p class="text-center text-xs text-muted-foreground">
+                            The money is only taken once your booking is
+                            confirmed. Starting a payment gives you a fresh
+                            {{ paymentWindow }} minutes.
+                        </p>
+                    </div>
+                    <InputError :message="paymentError ?? undefined" />
                 </section>
             </div>
 

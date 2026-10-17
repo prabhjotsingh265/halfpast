@@ -86,7 +86,7 @@ export type ManagedBooking = {
     notes: string | null;
     /** Signed link to the .ics file, once confirmed. */
     calendar_url: string | null;
-    cancelled_by: 'customer' | 'business' | null;
+    cancelled_by: 'customer' | 'business' | 'system' | null;
     /** Minor units going back to the customer after a cancellation. */
     refund_due: number;
 };
@@ -99,4 +99,26 @@ export type CancellationOffer = {
     window_hours: number;
     /** Signed POST address. */
     url: string;
+};
+
+/** The latest payment attempt for a booking, as the checkout shows it. */
+export type CheckoutPayment = {
+    status:
+        | 'pending'
+        | 'authorized'
+        | 'captured'
+        | 'released'
+        | 'refunded'
+        | 'partially_refunded'
+        | 'failed';
+    outcome:
+        | 'confirmed'
+        | 'slot_taken'
+        | 'duplicate'
+        | 'amount_mismatch'
+        | 'not_bookable'
+        | 'capture_failed'
+        | null;
+    failure_reason: string | null;
+    refunded: boolean;
 };

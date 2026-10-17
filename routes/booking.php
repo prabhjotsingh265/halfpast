@@ -4,6 +4,7 @@ use App\Http\Controllers\BookingPageController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HoldController;
 use App\Http\Controllers\ManageBookingController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -23,6 +24,8 @@ Route::middleware('business-from-address')
         Route::delete('hold/{booking}', [HoldController::class, 'destroy'])->name('booking.release');
         Route::get('checkout/{booking}', [CheckoutController::class, 'show'])->name('booking.checkout');
         Route::post('checkout/{booking}', [CheckoutController::class, 'store'])->middleware('throttle:20,1')->name('booking.details');
+        Route::post('checkout/{booking}/pay', [PaymentController::class, 'store'])->middleware('throttle:20,1')->name('booking.pay');
+        Route::get('checkout/{booking}/payments/{payment}', [PaymentController::class, 'show'])->scopeBindings()->name('booking.payment.return');
 
         // The customer's link from their confirmation email.
         Route::get('booking/{booking}', [ManageBookingController::class, 'show'])->middleware('signed')->name('booking.manage');

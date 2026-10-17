@@ -78,6 +78,29 @@ function send(action: string): void {
                 >
                     Decline the card
                 </button>
+                <p
+                    class="mt-3 border-t border-[#d0d7de] pt-3 text-xs font-semibold text-[#59636e]"
+                >
+                    Try the awkward cases
+                </p>
+                <button
+                    type="button"
+                    class="rounded-md border border-[#d0d7de] px-4 py-2 text-sm hover:bg-[#f6f8fa] disabled:opacity-60"
+                    :disabled="form.processing"
+                    data-test="test-pay-late"
+                    @click="send('pay_late')"
+                >
+                    Pay after the hold has run out
+                </button>
+                <button
+                    type="button"
+                    class="rounded-md border border-[#d0d7de] px-4 py-2 text-sm hover:bg-[#f6f8fa] disabled:opacity-60"
+                    :disabled="form.processing"
+                    data-test="test-pay-taken"
+                    @click="send('pay_after_taken')"
+                >
+                    Pay after someone else took the time
+                </button>
                 <button
                     type="button"
                     class="px-4 py-2 text-sm text-[#59636e] hover:underline disabled:opacity-60"

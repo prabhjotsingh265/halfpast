@@ -4,15 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Actions\Booking\ConfirmBooking;
 use App\Actions\Booking\FindBookableTimes;
-use App\Actions\Booking\HoldTime;
+use App\Actions\Booking\HoldAgain;
 use App\Enums\BookingStatus;
-use App\Exceptions\TimeNotAvailable;
 use App\Http\Requests\CustomerDetailsRequest;
 use App\Models\Booking;
 use App\Models\Business;
 use App\Models\Customer;
+use App\Models\Payment;
 use App\Models\Service;
 use App\Models\Staff;
+use App\Payments\Gateways;
+use App\Payments\PaymentGateway;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +27,7 @@ use Inertia\Response;
  */
 class CheckoutController extends Controller
 {
-    public function __construct(private FindBookableTimes $times, private HoldTime $hold) {}
+    public function __construct(private FindBookableTimes $times, private HoldAgain $holdAgain, private Gateways $gateways) {}
 
     public function show(Request $request, Business $business, Booking $booking): Response|RedirectResponse
     {
@@ -36,6 +38,7 @@ class CheckoutController extends Controller
         }
 
         $booking->load(['staff', 'customer']);
+        $payment = Payment::where('booking_id', $booking->id)->latest('id')->first();
 
         return Inertia::render('booking/Checkout', [
             'booking' => [
@@ -60,7 +63,22 @@ class CheckoutController extends Controller
                 'phone' => $booking->customer->phone,
                 'notes' => $booking->notes,
             ],
+            'gateways' => array_values(array_map(
+                fn (PaymentGateway $gateway) => ['key' => $gateway->key(), 'label' => $gateway->label()],
+                $this->gateways->for($business),
+            )),
+            'payment' => $payment === null ? null : [
+                'status' => $payment->status->value,
+                'outcome' => $payment->outcome?->value,
+                'failure_reason' => $payment->failure_reason,
+                // Money already taken comes back as a refund; otherwise it was never taken.
+                'refunded' => $payment->captured_at !== null,
+            ],
+            // Back from the gateway without paying, or back to wait for it.
+            'cancelled' => $request->boolean('cancelled'),
+            'returned' => $request->boolean('returned'),
             'holdMinutes' => $business->hold_minutes,
+            'paymentWindow' => (int) config('payments.payment_window_minutes'),
             // The browser's clock may be off; the countdown runs from the server's.
             'serverNow' => now()->utc()->toIso8601ZuluString(),
         ]);
@@ -134,26 +152,14 @@ class CheckoutController extends Controller
             ->contains(fn ($slot) => $slot->start->getTimestamp() === $booking->starts_at->getTimestamp());
     }
 
-    /**
-     * A fresh hold on the same time with the same person, which becomes the
-     * browser's hold in place of the cleared one. Null if it's been taken.
-     */
+    /** Holds the cleared time again, if it's still free, as this browser's hold. */
     private function holdAgain(Request $request, Business $business, Booking $expired): ?Booking
     {
-        $service = Service::find($expired->service_id);
-        $staff = Staff::find($expired->staff_id);
+        $booking = $this->holdAgain->handle($business, $expired);
 
-        if ($service === null || $staff === null) {
-            return null;
+        if ($booking !== null) {
+            $request->session()->put(HoldController::SESSION_KEY, [$booking->code]);
         }
-
-        try {
-            $booking = $this->hold->handle($business, $service, $staff, $expired->starts_at);
-        } catch (TimeNotAvailable) {
-            return null;
-        }
-
-        $request->session()->put(HoldController::SESSION_KEY, [$booking->code]);
 
         return $booking;
     }

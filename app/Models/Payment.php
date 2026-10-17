@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentOutcome;
 use App\Enums\PaymentStatus;
 use App\Tenancy\BelongsToBusiness;
 use Carbon\CarbonImmutable;
@@ -22,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $amount
  * @property string $currency
  * @property PaymentStatus $status
+ * @property PaymentOutcome|null $outcome
  * @property string|null $gateway_order_id
  * @property string|null $gateway_payment_id
  * @property CarbonImmutable|null $authorized_at
@@ -39,6 +41,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'amount',
     'currency',
     'status',
+    'outcome',
     'gateway_order_id',
     'gateway_payment_id',
     'authorized_at',
@@ -62,6 +65,7 @@ class Payment extends Model
     {
         return [
             'status' => PaymentStatus::class,
+            'outcome' => PaymentOutcome::class,
             'authorized_at' => 'immutable_datetime',
             'captured_at' => 'immutable_datetime',
             'released_at' => 'immutable_datetime',

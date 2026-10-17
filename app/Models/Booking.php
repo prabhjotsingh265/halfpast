@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 /**
@@ -126,6 +127,14 @@ class Booking extends Model
     }
 
     /**
+     * @return BelongsTo<Business, $this>
+     */
+    public function business(): BelongsTo
+    {
+        return $this->belongsTo(Business::class);
+    }
+
+    /**
      * @return BelongsTo<Service, $this>
      */
     public function service(): BelongsTo
@@ -152,6 +161,18 @@ class Booking extends Model
     public function getRouteKeyName(): string
     {
         return 'code';
+    }
+
+    /**
+     * The customer's own link to their booking, signed so it can't be
+     * guessed or altered. It's in their confirmation email.
+     */
+    public function manageUrl(): string
+    {
+        return URL::signedRoute('booking.manage', [
+            'business' => $this->business()->value('slug'),
+            'booking' => $this->code,
+        ]);
     }
 
     /** Readable in a list: "7K2Q-9XMB-AT". */

@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Booking\ConfirmBooking;
 use App\Enums\BookingStatus;
+use App\Http\Requests\CustomerDetailsRequest;
 use App\Models\Booking;
 use App\Models\Business;
+use App\Models\Customer;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,11 +20,15 @@ use Inertia\Response;
  */
 class CheckoutController extends Controller
 {
-    public function show(Request $request, Business $business, Booking $booking): Response
+    public function show(Request $request, Business $business, Booking $booking): Response|RedirectResponse
     {
         abort_unless(HoldController::heldBy($request, $booking), 404);
 
-        $booking->load('staff');
+        if ($booking->status === BookingStatus::Confirmed) {
+            return redirect()->to($booking->manageUrl());
+        }
+
+        $booking->load(['staff', 'customer']);
 
         return Inertia::render('booking/Checkout', [
             'booking' => [
@@ -33,12 +42,62 @@ class CheckoutController extends Controller
                 'deposit' => $booking->deposit,
                 'currency' => $booking->currency,
                 'held' => $booking->isHeld(),
-                'confirmed' => $booking->status === BookingStatus::Confirmed,
+                // Lapsed, but nobody has taken the time, so it can still be booked.
+                'renewable' => $booking->status === BookingStatus::Held,
+                'confirmed' => false,
                 'hold_expires_at' => $booking->hold_expires_at?->utc()->toIso8601ZuluString(),
+            ],
+            'customer' => $booking->customer === null ? null : [
+                'name' => $booking->customer->name,
+                'email' => $booking->customer->email,
+                'phone' => $booking->customer->phone,
+                'notes' => $booking->notes,
             ],
             'holdMinutes' => $business->hold_minutes,
             // The browser's clock may be off; the countdown runs from the server's.
             'serverNow' => now()->utc()->toIso8601ZuluString(),
         ]);
+    }
+
+    /**
+     * Saves who the booking is for. With nothing to pay, that confirms it;
+     * with a deposit, the next step is paying it.
+     */
+    public function store(CustomerDetailsRequest $request, Business $business, Booking $booking, ConfirmBooking $confirm): RedirectResponse
+    {
+        abort_unless(HoldController::heldBy($request, $booking), 404);
+
+        if ($booking->status === BookingStatus::Confirmed) {
+            return redirect()->to($booking->manageUrl());
+        }
+
+        if ($booking->status !== BookingStatus::Held) {
+            return back()->withErrors(['booking' => 'Your hold ran out and the time has gone to someone else. Please pick another.']);
+        }
+
+        DB::transaction(function () use ($request, $booking) {
+            $email = mb_strtolower(trim((string) $request->validated('email')));
+            $details = [
+                'name' => (string) $request->validated('name'),
+                'phone' => $request->validated('phone'),
+            ];
+
+            // One record per email address, made safely even if two bookings
+            // with the same address arrive at once.
+            $customer = Customer::createOrFirst(['email' => $email], $details);
+            $customer->update(array_filter($details, fn ($value) => $value !== null));
+
+            $booking->update(['customer_id' => $customer->id, 'notes' => $request->validated('notes')]);
+        });
+
+        if ($booking->deposit > 0) {
+            return redirect()->route('booking.checkout', [$business, $booking]);
+        }
+
+        if (! $confirm->handle($booking)) {
+            return back()->withErrors(['booking' => 'Your hold ran out and the time has gone to someone else. Please pick another.']);
+        }
+
+        return redirect()->to($booking->manageUrl());
     }
 }

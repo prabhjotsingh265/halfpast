@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ArrowLeft, TimerOff } from '@lucide/vue';
+import { ArrowLeft, CreditCard, Pencil, TimerOff } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import BookingHeader from '@/components/booking/BookingHeader.vue';
+import DetailsForm from '@/components/booking/DetailsForm.vue';
 import HoldRing from '@/components/booking/HoldRing.vue';
 import { Button } from '@/components/ui/button';
 import { timeIn, zoneCity } from '@/lib/booking';
 import { formatMoney } from '@/lib/money';
 import { countdown, duration } from '@/lib/time';
 import { localZone } from '@/lib/zones';
-import type { CheckoutBooking } from '@/types/booking';
+import type { CheckoutBooking, CheckoutCustomer } from '@/types/booking';
 
 const props = defineProps<{
     booking: CheckoutBooking;
+    customer: CheckoutCustomer | null;
     holdMinutes: number;
     serverNow: string;
 }>();
@@ -40,6 +42,17 @@ const secondsLeft = computed(() =>
         : 0,
 );
 const held = computed(() => props.booking.held && secondsLeft.value > 0);
+// The ten minutes are up, but nobody has taken the time, so it can still be booked.
+const lapsedButFree = computed(() => !held.value && props.booking.renewable);
+const canFinish = computed(() => held.value || lapsedButFree.value);
+// Details saved and a deposit to pay: the payment step.
+const editingDetails = ref(false);
+const paying = computed(
+    () =>
+        props.booking.deposit > 0 &&
+        props.customer !== null &&
+        !editingDetails.value,
+);
 const progress = computed(() => secondsLeft.value / (props.holdMinutes * 60));
 // Screen readers hear the time left once a minute, not every second.
 const minutesLeft = computed(() => Math.ceil(secondsLeft.value / 60));
@@ -104,7 +117,7 @@ const againUrl = computed(() =>
                     data-test="hold-card"
                 >
                     <div
-                        class="relative grid h-16 w-24 shrink-0 place-items-center rounded-[14px] bg-sun/20"
+                        class="relative grid h-16 w-28 shrink-0 place-items-center rounded-[14px] bg-sun/20"
                     >
                         <span class="text-lg font-semibold font-time">{{
                             timeIn(booking.starts_at, zone)
@@ -134,7 +147,22 @@ const againUrl = computed(() =>
                 </section>
 
                 <section
-                    v-else-if="!booking.confirmed"
+                    v-else-if="lapsedButFree"
+                    class="flex animate-in items-start gap-3 rounded-2xl border border-sun-deep/30 bg-sun/10 p-4 text-sm fade-in"
+                    data-test="hold-lapsed"
+                >
+                    <TimerOff class="mt-0.5 size-4 shrink-0 text-sun-deep" />
+                    <p>
+                        <span class="font-medium"
+                            >Your {{ holdMinutes }} minutes are up</span
+                        >, but nobody has taken
+                        {{ timeIn(booking.starts_at, zone) }} yet. Finish now
+                        and it's yours.
+                    </p>
+                </section>
+
+                <section
+                    v-else
                     class="flex animate-in flex-col items-center rounded-2xl border border-dashed px-6 py-12 text-center fade-in"
                     data-test="hold-expired"
                 >
@@ -144,15 +172,67 @@ const againUrl = computed(() =>
                         <TimerOff class="size-5 text-muted-foreground" />
                     </span>
                     <h2 class="mt-4 text-lg font-semibold">
-                        Your hold ran out
+                        Someone else has this time now
                     </h2>
                     <p class="mt-1 max-w-sm text-sm text-muted-foreground">
                         {{ timeIn(booking.starts_at, zone) }} on {{ date }} has
-                        gone back on the list. It may still be free.
+                        gone to someone else. There may be other times that suit
+                        you.
                     </p>
                     <Button as-child class="mt-6 rounded-xl">
                         <Link :href="againUrl">Pick a time again</Link>
                     </Button>
+                </section>
+
+                <DetailsForm
+                    v-if="canFinish && !paying"
+                    :booking="booking"
+                    :customer="customer"
+                />
+
+                <section
+                    v-else-if="canFinish && paying && customer"
+                    class="animate-in space-y-5 rounded-2xl border bg-card p-5 fade-in slide-in-from-bottom-2 md:p-6"
+                    data-test="payment-step"
+                >
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <h2 class="text-lg font-semibold">
+                                Pay the deposit
+                            </h2>
+                            <p class="text-sm text-muted-foreground">
+                                {{
+                                    formatMoney(
+                                        booking.deposit,
+                                        booking.currency,
+                                    )
+                                }}
+                                now keeps your booking. The rest is paid on the
+                                day.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            class="inline-flex shrink-0 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                            @click="editingDetails = true"
+                        >
+                            <Pencil class="size-3.5" />
+                            Edit details
+                        </button>
+                    </div>
+                    <p class="rounded-xl bg-muted px-3 py-2.5 text-sm">
+                        {{ customer.name }} · {{ customer.email }}
+                        <template v-if="customer.phone">
+                            · {{ customer.phone }}</template
+                        >
+                    </p>
+                    <div
+                        class="flex items-center gap-3 rounded-xl border border-dashed p-4 text-sm text-muted-foreground"
+                    >
+                        <CreditCard class="size-5 shrink-0" />
+                        Payment options appear here once {{ business.name }}
+                        switches them on.
+                    </div>
                 </section>
             </div>
 

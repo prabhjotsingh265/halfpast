@@ -49,6 +49,39 @@ export type CheckoutBooking = {
     currency: string;
     /** Still held, and the hold hasn't run out. */
     held: boolean;
+    /** The hold has run out but nobody has taken the time, so it can still be booked. */
+    renewable: boolean;
     confirmed: boolean;
     hold_expires_at: string | null;
+};
+
+export type CheckoutCustomer = {
+    name: string;
+    email: string | null;
+    phone: string | null;
+    notes: string | null;
+};
+
+/** A booking as the customer's own page shows it. */
+export type ManagedBooking = {
+    /** Readable reference, "7K2Q-9XMB-AT". */
+    code: string;
+    status:
+        | 'held'
+        | 'confirmed'
+        | 'expired'
+        | 'cancelled'
+        | 'completed'
+        | 'no_show';
+    service_name: string;
+    service_id: number | null;
+    staff_name: string | null;
+    starts_at: string;
+    ends_at: string;
+    price: number;
+    deposit: number;
+    currency: string;
+    customer_name: string | null;
+    customer_email: string | null;
+    notes: string | null;
 };

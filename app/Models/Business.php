@@ -47,6 +47,20 @@ class Business extends Model
     public const CURRENCIES = ['GBP', 'USD', 'EUR', 'INR', 'AUD', 'CAD'];
 
     /**
+     * The booking rules' defaults, the same as the table's, so a business
+     * made in code has them before it's ever reloaded from the database.
+     *
+     * @var array<string, int>
+     */
+    protected $attributes = [
+        'slot_step_minutes' => 15,
+        'min_notice_minutes' => 120,
+        'booking_horizon_days' => 60,
+        'cancellation_window_hours' => 24,
+        'hold_minutes' => 10,
+    ];
+
+    /**
      * Everyone who works here, with their role.
      *
      * @return BelongsToMany<User, $this, Membership>
@@ -75,6 +89,12 @@ class Business extends Model
     public function staff(): HasMany
     {
         return $this->hasMany(Staff::class);
+    }
+
+    /** Booking pages are addressed by slug: /glow-studio. */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
     }
 
     public function addMember(User $user, BusinessRole $role): void

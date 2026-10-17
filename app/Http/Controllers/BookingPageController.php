@@ -68,6 +68,7 @@ class BookingPageController extends Controller
             ])->values(),
             'today' => $today,
             'lastDay' => $lastDay,
+            'holdMinutes' => $business->hold_minutes,
             'selection' => fn () => [
                 'service_id' => $service?->id,
                 'staff_id' => $staff?->id,

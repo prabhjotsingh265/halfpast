@@ -35,3 +35,20 @@ export type BookableTime = {
     starts_at: string;
     staff_ids: number[];
 };
+
+/** A held (or just confirmed) booking, as the checkout page sees it. */
+export type CheckoutBooking = {
+    code: string;
+    service_name: string;
+    service_id: number | null;
+    staff_name: string | null;
+    starts_at: string;
+    ends_at: string;
+    price: number;
+    deposit: number;
+    currency: string;
+    /** Still held, and the hold hasn't run out. */
+    held: boolean;
+    confirmed: boolean;
+    hold_expires_at: string | null;
+};

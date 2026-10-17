@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\BookingPageController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\HoldController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,4 +16,9 @@ Route::middleware('business-from-address')
     ->where(['business' => '[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])'])
     ->group(function () {
         Route::get('/', [BookingPageController::class, 'show'])->name('booking.show');
+
+        // Generous for a person, tight enough that a script can't hold a whole day.
+        Route::post('hold', [HoldController::class, 'store'])->middleware('throttle:20,1')->name('booking.hold');
+        Route::delete('hold/{booking}', [HoldController::class, 'destroy'])->name('booking.release');
+        Route::get('checkout/{booking}', [CheckoutController::class, 'show'])->name('booking.checkout');
     });

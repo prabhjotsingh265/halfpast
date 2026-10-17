@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { CalendarSearch, Globe, Store } from '@lucide/vue';
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { CalendarSearch, Store, TriangleAlert } from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
+import BookingHeader from '@/components/booking/BookingHeader.vue';
 import DayStrip from '@/components/booking/DayStrip.vue';
 import ServicePicker from '@/components/booking/ServicePicker.vue';
 import StaffPicker from '@/components/booking/StaffPicker.vue';
@@ -10,10 +11,9 @@ import HalfpastMark from '@/components/brand/HalfpastMark.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { timeIn, zoneCity } from '@/lib/booking';
-import { daylightRange } from '@/lib/daylight';
 import { formatDate } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
-import { duration, hourNow } from '@/lib/time';
+import { duration } from '@/lib/time';
 import { localZone } from '@/lib/zones';
 import type {
     BookableService,
@@ -28,6 +28,7 @@ const props = defineProps<{
     staff: BookableStaff[];
     today: string;
     lastDay: string;
+    holdMinutes: number;
     selection: BookingSelection;
     days: BookingDay[] | null;
     times: BookableTime[] | null;
@@ -65,6 +66,61 @@ const zone = computed(() =>
 const picked = computed(
     () => props.times?.find((t) => t.starts_at === pickedTime.value) ?? null,
 );
+
+// Holding the picked time. If someone got there first, the page comes back
+// with fresh times and the nearest free ones are offered instead.
+const holding = ref(false);
+const takenTime = ref<string | null>(null);
+const holdError = computed(() => page.props.errors?.starts_at ?? null);
+
+const nearby = computed(() => {
+    if (!takenTime.value || !props.times) {
+        return [];
+    }
+
+    const wanted = new Date(takenTime.value).getTime();
+
+    return [...props.times]
+        .sort(
+            (a, b) =>
+                Math.abs(new Date(a.starts_at).getTime() - wanted) -
+                Math.abs(new Date(b.starts_at).getTime() - wanted),
+        )
+        .slice(0, 3)
+        .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+});
+
+function hold(): void {
+    if (!picked.value || !service.value) {
+        return;
+    }
+
+    const wanted = picked.value.starts_at;
+
+    router.post(
+        route('booking.hold', { business: business.value.slug }),
+        {
+            service_id: service.value.id,
+            staff_id: props.selection.staff_id,
+            starts_at: wanted,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            onStart: () => (holding.value = true),
+            onFinish: () => (holding.value = false),
+            onError: () => {
+                takenTime.value = wanted;
+                pickedTime.value = null;
+            },
+        },
+    );
+}
+
+function pickTime(startsAt: string): void {
+    pickedTime.value = startsAt;
+    takenTime.value = null;
+}
 
 /** Change part of the choice and reload only the days and times. */
 function choose(
@@ -144,14 +200,18 @@ const whoLabel = computed(() => {
     }
 
     if (!picked.value) {
-        return people.value.length === 1 ? people.value[0].name : 'Anyone free';
+        return people.value.length === 1
+            ? people.value[0].name
+            : 'whoever is free';
     }
 
     const free = people.value.filter((m) =>
         picked.value!.staff_ids.includes(m.id),
     );
 
-    return free.length === 1 ? free[0].name : `Anyone free (${free.length})`;
+    return free.length === 1
+        ? free[0].name
+        : `whoever is free (${free.length} people)`;
 });
 
 // Scroll on to the next step once something is picked, on smaller screens.
@@ -171,60 +231,13 @@ watch(
         }
     },
 );
-
-// A live clock for the business, so it's clear what time it is there.
-const now = ref(new Date());
-let timer = 0;
-
-onMounted(() => {
-    timer = window.setInterval(() => (now.value = new Date()), 20_000);
-});
-
-onBeforeUnmount(() => window.clearInterval(timer));
-
-const headerTint = computed(() => {
-    const hour = hourNow();
-
-    return daylightRange(hour, hour + 4);
-});
 </script>
 
 <template>
     <Head :title="`Book with ${business.name}`" />
 
     <div class="min-h-svh bg-background pb-32 text-foreground lg:pb-16">
-        <header
-            class="relative overflow-clip border-b bg-[linear-gradient(120deg,var(--from),var(--to))] dark:bg-[linear-gradient(120deg,var(--from-dark),var(--to-dark))]"
-            :style="headerTint"
-        >
-            <div
-                class="mx-auto flex max-w-5xl items-center gap-4 px-4 py-8 md:py-12"
-            >
-                <span
-                    class="grid size-14 shrink-0 animate-in place-items-center rounded-2xl bg-sun text-2xl font-[820] text-[#15181F] shadow-sm duration-500 zoom-in-75 md:size-16"
-                    aria-hidden="true"
-                >
-                    {{ business.name.trim().charAt(0).toUpperCase() }}
-                </span>
-                <div class="min-w-0">
-                    <h1
-                        class="animate-in text-2xl font-[760] tracking-tight duration-500 fade-in slide-in-from-bottom-2 md:text-4xl"
-                    >
-                        {{ business.name }}
-                    </h1>
-                    <p
-                        class="mt-1 flex items-center gap-1.5 text-sm text-foreground/70"
-                    >
-                        <Globe class="size-3.5" />
-                        It's
-                        <span class="font-time">{{
-                            timeIn(now, business.timezone)
-                        }}</span>
-                        in {{ zoneCity(business.timezone) }}
-                    </p>
-                </div>
-            </div>
-        </header>
+        <BookingHeader />
 
         <main
             class="mx-auto grid max-w-5xl gap-10 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start"
@@ -358,6 +371,43 @@ const headerTint = computed(() => {
                     />
 
                     <div
+                        v-if="holdError && takenTime"
+                        class="mt-6 flex animate-in gap-3 rounded-2xl border border-sun-deep/30 bg-sun/10 p-4 fade-in slide-in-from-top-1"
+                        role="alert"
+                        data-test="hold-error"
+                    >
+                        <TriangleAlert
+                            class="mt-0.5 size-4 shrink-0 text-sun-deep"
+                        />
+                        <div class="min-w-0 text-sm">
+                            <p class="font-medium">
+                                {{ timeIn(takenTime, zone) }} isn't free any
+                                more. Someone may have just booked it.
+                            </p>
+                            <p
+                                v-if="nearby.length"
+                                class="mt-1 text-muted-foreground"
+                            >
+                                Still free close by:
+                            </p>
+                            <div
+                                v-if="nearby.length"
+                                class="mt-2 flex flex-wrap gap-2"
+                            >
+                                <button
+                                    v-for="time in nearby"
+                                    :key="time.starts_at"
+                                    type="button"
+                                    class="rounded-full border bg-background px-3 py-1 text-sm font-medium font-time transition-colors hover:border-foreground/40"
+                                    @click="pickTime(time.starts_at)"
+                                >
+                                    {{ timeIn(time.starts_at, zone) }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
                         class="relative mt-6 min-h-40 transition-opacity duration-200"
                         :class="loading && 'opacity-50'"
                         aria-live="polite"
@@ -373,7 +423,7 @@ const headerTint = computed(() => {
                             :zone="zone"
                             :selected="pickedTime"
                             :day-key="`${selection.date}-${selection.staff_id}-${selection.service_id}`"
-                            @select="pickedTime = $event"
+                            @select="pickTime"
                         />
                         <div
                             v-else-if="times"
@@ -498,6 +548,21 @@ const headerTint = computed(() => {
                             </dd>
                         </div>
                     </dl>
+                    <Button
+                        type="button"
+                        size="lg"
+                        class="mt-5 w-full rounded-xl"
+                        :disabled="!picked || holding"
+                        data-test="hold"
+                        @click="hold"
+                    >
+                        <Spinner v-if="holding" />
+                        Hold this time
+                    </Button>
+                    <p class="mt-2 text-center text-xs text-muted-foreground">
+                        We'll keep it for you for {{ holdMinutes }} minutes
+                        while you finish.
+                    </p>
                 </template>
                 <p v-else class="mt-3 text-sm text-muted-foreground">
                     Choose a service to see free times.
@@ -517,21 +582,37 @@ const headerTint = computed(() => {
                 class="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden"
                 data-test="mobile-summary"
             >
-                <p class="text-sm">
-                    <span class="font-semibold">{{ service.name }}</span>
-                    · {{ formatDate(selection.date) }} ·
-                    <span class="font-time">{{
-                        timeIn(picked.starts_at, zone)
-                    }}</span>
-                </p>
-                <p class="text-xs text-muted-foreground">
-                    with {{ whoLabel }} ·
-                    {{
-                        service.deposit
-                            ? `${formatMoney(service.deposit, business.currency)} deposit`
-                            : 'nothing to pay now'
-                    }}
-                </p>
+                <div class="flex items-center gap-3">
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm">
+                            <span class="font-semibold">{{
+                                service.name
+                            }}</span>
+                            · {{ formatDate(selection.date) }} ·
+                            <span class="font-time">{{
+                                timeIn(picked.starts_at, zone)
+                            }}</span>
+                        </p>
+                        <p class="text-xs text-muted-foreground">
+                            with {{ whoLabel }} ·
+                            {{
+                                service.deposit
+                                    ? `${formatMoney(service.deposit, business.currency)} deposit`
+                                    : 'nothing to pay now'
+                            }}
+                        </p>
+                    </div>
+                    <Button
+                        type="button"
+                        class="shrink-0 rounded-xl"
+                        :disabled="holding"
+                        data-test="hold-mobile"
+                        @click="hold"
+                    >
+                        <Spinner v-if="holding" />
+                        Hold it
+                    </Button>
+                </div>
             </div>
         </Transition>
 

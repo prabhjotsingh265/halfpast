@@ -174,7 +174,7 @@ const headline = computed(
                     >
                         {{
                             booking.refund_due > 0
-                                ? `Your ${formatMoney(booking.refund_due, booking.currency)} deposit is being refunded.`
+                                ? `Your ${formatMoney(booking.refund_due, booking.currency)} deposit ${booking.refunded ? 'has been refunded. It usually shows within 5 to 7 working days.' : 'is being refunded.'}`
                                 : 'The deposit was kept, as it was inside the cancellation window.'
                         }}
                     </template>

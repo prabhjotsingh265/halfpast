@@ -6,6 +6,7 @@ use App\Actions\Booking\CancelBooking;
 use App\Actions\Booking\CancellationTerms;
 use App\Models\Booking;
 use App\Models\Business;
+use App\Models\Refund;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\URL;
@@ -41,6 +42,11 @@ class ManageBookingController extends Controller
                 'calendar_url' => $booking->status->value === 'confirmed' ? $booking->calendarUrl() : null,
                 'cancelled_by' => $booking->cancelled_by,
                 'refund_due' => $booking->refund_due,
+                // Whether the gateway has done the refund yet.
+                'refunded' => $booking->refund_due > 0 && Refund::whereIn('payment_id', $booking->payments()->select('id'))
+                    ->whereIn('reason', ['customer_cancelled', 'business_cancelled'])
+                    ->where('status', 'succeeded')
+                    ->exists(),
             ],
             'cancellation' => $terms->allowed ? [
                 'refund' => $terms->refund,

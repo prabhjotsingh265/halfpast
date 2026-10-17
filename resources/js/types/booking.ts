@@ -89,6 +89,8 @@ export type ManagedBooking = {
     cancelled_by: 'customer' | 'business' | 'system' | null;
     /** Minor units going back to the customer after a cancellation. */
     refund_due: number;
+    /** The gateway has done the refund. */
+    refunded: boolean;
 };
 
 /** What cancelling now would mean, and where to send it. */

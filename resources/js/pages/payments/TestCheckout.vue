@@ -12,7 +12,7 @@ defineProps<{
     amount: number;
     currency: string;
     state: string;
-    cancelUrl: string;
+    closed: boolean;
 }>();
 
 const form = useForm({ action: '' });
@@ -44,7 +44,15 @@ function send(action: string): void {
             </p>
 
             <p
-                v-if="state !== 'pending'"
+                v-if="closed"
+                class="mt-4 rounded bg-[#dafbe1] p-3 text-sm"
+                data-test="test-closed"
+            >
+                Payment done. You can close this tab: the shop hears about it
+                directly from us.
+            </p>
+            <p
+                v-else-if="state !== 'pending'"
                 class="mt-4 rounded bg-[#f6f8fa] p-3 text-sm"
             >
                 This payment is already {{ state }}.
@@ -68,6 +76,15 @@ function send(action: string): void {
                     @click="send('pay_and_capture')"
                 >
                     Pay, taking the money straight away
+                </button>
+                <button
+                    type="button"
+                    class="rounded-md border border-[#d0d7de] px-4 py-2 text-sm hover:bg-[#f6f8fa] disabled:opacity-60"
+                    :disabled="form.processing"
+                    data-test="test-pay-close"
+                    @click="send('pay_and_close')"
+                >
+                    Pay, then close the tab without going back
                 </button>
                 <button
                     type="button"

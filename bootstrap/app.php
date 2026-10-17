@@ -21,6 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // Payment gateways can't send a CSRF token; their signatures are checked instead.
+        $middleware->validateCsrfTokens(except: ['webhooks/*']);
+
         // Route models like {service} must load inside the current business,
         // so the business is worked out before bindings are resolved.
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: SetCurrentBusiness::class);

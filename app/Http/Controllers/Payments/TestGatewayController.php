@@ -4,14 +4,15 @@ namespace App\Http\Controllers\Payments;
 
 use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
+use App\Jobs\SendTestWebhook;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Payments\GatewayError;
 use App\Payments\Gateways\TestGateway;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * The test gateway's own payment page, standing in for Stripe's or PayPal's.
@@ -27,21 +28,15 @@ class TestGatewayController extends Controller
     public function show(string $order): Response
     {
         try {
-            $state = $this->gateway->load($order);
+            $this->gateway->load($order);
         } catch (GatewayError) {
             abort(404);
         }
 
-        return Inertia::render('payments/TestCheckout', [
-            'order' => $order,
-            'amount' => $state['amount'],
-            'currency' => $state['currency'],
-            'state' => $state['state'],
-            'cancelUrl' => $state['cancel'],
-        ]);
+        return Inertia::render('payments/TestCheckout', [...$this->props($order), 'closed' => false]);
     }
 
-    public function update(Request $request, string $order): RedirectResponse
+    public function update(Request $request, string $order): SymfonyResponse
     {
         try {
             $state = $this->gateway->load($order);
@@ -49,10 +44,10 @@ class TestGatewayController extends Controller
             abort(404);
         }
 
-        $action = (string) $request->validate(['action' => ['required', 'in:pay,pay_and_capture,decline,cancel,pay_late,pay_after_taken']])['action'];
+        $action = (string) $request->validate(['action' => ['required', 'in:pay,pay_and_capture,pay_and_close,decline,cancel,pay_late,pay_after_taken']])['action'];
 
         match ($action) {
-            'pay' => $this->gateway->pay($order),
+            'pay', 'pay_and_close' => $this->gateway->pay($order),
             'pay_late' => $this->payLate($order, taken: false),
             'pay_after_taken' => $this->payLate($order, taken: true),
             'pay_and_capture' => $this->gateway->pay($order, capture: true),
@@ -60,7 +55,34 @@ class TestGatewayController extends Controller
             default => null,
         };
 
+        // Like a real gateway, it also sends a webhook a moment later.
+        if ($action !== 'cancel') {
+            SendTestWebhook::dispatch($order, $action === 'decline' ? 'payment.failed' : 'payment.authorized')
+                ->delay(now()->addSeconds(2));
+        }
+
+        // A customer who closes the tab after paying never comes back; only
+        // the webhook can settle their booking.
+        if ($action === 'pay_and_close') {
+            return Inertia::render('payments/TestCheckout', [...$this->props($order), 'closed' => true])->toResponse($request);
+        }
+
         return redirect()->away($action === 'cancel' ? $state['cancel'] : $state['return']);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function props(string $order): array
+    {
+        $state = $this->gateway->load($order);
+
+        return [
+            'order' => $order,
+            'amount' => $state['amount'],
+            'currency' => $state['currency'],
+            'state' => $state['state'],
+        ];
     }
 
     /**

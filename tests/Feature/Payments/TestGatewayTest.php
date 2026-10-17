@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\PaymentStatus;
+use App\Models\Booking;
 use App\Models\Business;
 use App\Models\Payment;
 use App\Payments\CheckoutLinks;
@@ -12,7 +14,7 @@ use Illuminate\Http\Request;
 
 beforeEach(function () {
     $this->gateway = app(TestGateway::class);
-    $this->payment = Payment::factory()->create(['amount' => 2000, 'currency' => 'GBP', 'gateway_order_id' => null]);
+    $this->payment = Payment::factory()->create(['booking_id' => Booking::factory()->held()->create(['deposit' => 2000])->id, 'amount' => 2000, 'currency' => 'GBP', 'gateway_order_id' => null]);
     $this->checkout = $this->gateway->begin($this->payment, $this->payment->booking, new CheckoutLinks('https://halfpast.test/back', 'https://halfpast.test/cancelled'));
     $this->order = $this->payment->fresh()->gateway_order_id;
 });
@@ -84,7 +86,10 @@ it('has a payment page that sends the customer back', function () {
         ->assertInertia(fn ($page) => $page->component('payments/TestCheckout')->where('amount', 2000)->where('state', 'pending'));
 
     $this->post($this->checkout->redirectUrl, ['action' => 'pay'])->assertRedirect('https://halfpast.test/back');
-    expect($this->gateway->load($this->order)['state'])->toBe('authorized');
+
+    // Its webhook arrives (straight away in tests) and settles the payment.
+    expect($this->gateway->load($this->order)['state'])->toBe('captured')
+        ->and($this->payment->fresh()->status)->toBe(PaymentStatus::Captured);
 
     // Unsigned, the page doesn't exist.
     $this->get('/payments/test/'.$this->order)->assertForbidden();

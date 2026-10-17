@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Booking\CancelBooking;
+use App\Actions\Booking\CancellationTerms;
 use App\Models\Booking;
 use App\Models\Business;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,6 +21,7 @@ class ManageBookingController extends Controller
     public function show(Business $business, Booking $booking): Response
     {
         $booking->load(['staff', 'customer']);
+        $terms = CancellationTerms::for($booking, $business);
 
         return Inertia::render('booking/Manage', [
             'booking' => [
@@ -34,7 +39,16 @@ class ManageBookingController extends Controller
                 'customer_email' => $booking->customer?->email,
                 'notes' => $booking->notes,
                 'calendar_url' => $booking->status->value === 'confirmed' ? $booking->calendarUrl() : null,
+                'cancelled_by' => $booking->cancelled_by,
+                'refund_due' => $booking->refund_due,
             ],
+            'cancellation' => $terms->allowed ? [
+                'refund' => $terms->refund,
+                'kept' => $terms->kept,
+                'free_until' => $terms->freeUntil->utc()->toIso8601ZuluString(),
+                'window_hours' => $business->cancellation_window_hours,
+                'url' => URL::signedRoute('booking.cancel', ['business' => $business, 'booking' => $booking->code]),
+            ] : null,
         ]);
     }
 
@@ -45,5 +59,15 @@ class ManageBookingController extends Controller
             'Content-Type' => 'text/calendar; charset=utf-8',
             'Content-Disposition' => 'attachment; filename="booking-'.$booking->code.'.ics"',
         ]);
+    }
+
+    public function cancel(Business $business, Booking $booking, CancelBooking $cancel): RedirectResponse
+    {
+        if (! $cancel->handle($booking, 'customer')) {
+            return redirect()->to($booking->manageUrl())
+                ->withErrors(['booking' => 'This booking can no longer be cancelled online. Please contact '.$business->name.'.']);
+        }
+
+        return redirect()->to($booking->manageUrl());
     }
 }

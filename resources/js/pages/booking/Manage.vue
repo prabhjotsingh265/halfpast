@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
     CalendarClock,
     CalendarPlus,
@@ -7,17 +7,30 @@ import {
     Clock3,
     Mail,
 } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import BookingHeader from '@/components/booking/BookingHeader.vue';
+import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { Spinner } from '@/components/ui/spinner';
 import { timeIn, zoneCity } from '@/lib/booking';
 import { formatMoney } from '@/lib/money';
 import { duration } from '@/lib/time';
 import { localZone } from '@/lib/zones';
-import type { ManagedBooking } from '@/types/booking';
+import type { CancellationOffer, ManagedBooking } from '@/types/booking';
 
 const props = defineProps<{
     booking: ManagedBooking;
+    cancellation: CancellationOffer | null;
 }>();
 
 const business = computed(() => usePage().props.business!);
@@ -39,6 +52,52 @@ const length = computed(
             new Date(props.booking.starts_at).getTime()) /
         60_000,
 );
+
+const page = usePage();
+const cancelError = computed(() => page.props.errors?.booking ?? null);
+const cancelling = ref(false);
+
+const freeUntil = computed(() =>
+    props.cancellation
+        ? new Intl.DateTimeFormat(undefined, {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+              hour: 'numeric',
+              minute: '2-digit',
+              timeZone: zone,
+          }).format(new Date(props.cancellation.free_until))
+        : '',
+);
+
+/** What happens to the deposit, said before the customer confirms. */
+const cancelOutcome = computed(() => {
+    const offer = props.cancellation;
+
+    if (!offer || props.booking.deposit === 0) {
+        return 'There’s nothing to pay or refund.';
+    }
+
+    return offer.refund > 0
+        ? `Your ${formatMoney(offer.refund, props.booking.currency)} deposit will be refunded in full.`
+        : `It’s less than ${offer.window_hours} hours away, so ${business.value.name} keeps the ${formatMoney(offer.kept, props.booking.currency)} deposit.`;
+});
+
+function cancel(): void {
+    if (!props.cancellation) {
+        return;
+    }
+
+    router.post(
+        props.cancellation.url,
+        {},
+        {
+            preserveScroll: true,
+            onStart: () => (cancelling.value = true),
+            onFinish: () => (cancelling.value = false),
+        },
+    );
+}
 
 const headline = computed(
     () =>
@@ -95,6 +154,24 @@ const headline = computed(
                 >
                     {{ headline }}
                 </h1>
+                <p
+                    v-if="booking.status === 'cancelled'"
+                    class="mt-2 text-muted-foreground"
+                    data-test="cancelled-note"
+                >
+                    {{
+                        booking.cancelled_by === 'business'
+                            ? `${business.name} had to cancel it. Sorry for the trouble.`
+                            : 'The time is free for someone else now.'
+                    }}
+                    <template v-if="booking.deposit > 0">
+                        {{
+                            booking.refund_due > 0
+                                ? `Your ${formatMoney(booking.refund_due, booking.currency)} deposit is being refunded.`
+                                : 'The deposit was kept, as it was inside the cancellation window.'
+                        }}
+                    </template>
+                </p>
                 <p
                     v-if="booking.status === 'confirmed'"
                     class="mt-2 text-muted-foreground"
@@ -215,6 +292,53 @@ const headline = computed(
                     >
                 </Button>
             </div>
+
+            <div
+                v-if="cancellation"
+                class="mt-10 border-t pt-6 text-center text-sm text-muted-foreground"
+            >
+                <p v-if="booking.deposit > 0 && cancellation.refund > 0">
+                    Free to cancel until {{ freeUntil }}.
+                </p>
+                <Dialog>
+                    <DialogTrigger as-child>
+                        <Button
+                            variant="ghost"
+                            class="mt-1 text-muted-foreground"
+                            data-test="cancel-open"
+                            >Cancel this booking</Button
+                        >
+                    </DialogTrigger>
+                    <DialogContent class="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Cancel your booking?</DialogTitle>
+                            <DialogDescription>
+                                {{ booking.service_name }} on {{ date }} at
+                                {{ timeIn(booking.starts_at, zone) }}.
+                                {{ cancelOutcome }}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter class="gap-2">
+                            <DialogClose as-child>
+                                <Button variant="outline">Keep it</Button>
+                            </DialogClose>
+                            <Button
+                                variant="destructive"
+                                :disabled="cancelling"
+                                data-test="cancel-confirm"
+                                @click="cancel"
+                            >
+                                <Spinner v-if="cancelling" />
+                                Cancel booking
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
+            <InputError
+                class="mt-4 text-center"
+                :message="cancelError ?? undefined"
+            />
         </main>
     </div>
 </template>

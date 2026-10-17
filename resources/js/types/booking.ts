@@ -86,4 +86,17 @@ export type ManagedBooking = {
     notes: string | null;
     /** Signed link to the .ics file, once confirmed. */
     calendar_url: string | null;
+    cancelled_by: 'customer' | 'business' | null;
+    /** Minor units going back to the customer after a cancellation. */
+    refund_due: number;
+};
+
+/** What cancelling now would mean, and where to send it. */
+export type CancellationOffer = {
+    refund: number;
+    kept: number;
+    free_until: string;
+    window_hours: number;
+    /** Signed POST address. */
+    url: string;
 };

@@ -52,7 +52,7 @@ class BookingConfirmedMail extends Mailable implements ShouldQueue
                 'end' => $booking->ends_at->setTimezone($zone),
                 'zoneName' => str_replace('_', ' ', last(explode('/', $zone))),
                 'manageUrl' => $booking->manageUrl(),
-                'money' => fn (int $minor) => self::money($minor, $booking->currency),
+                'money' => fn (int $minor) => Money::format($minor, $booking->currency),
             ],
         );
     }
@@ -66,13 +66,5 @@ class BookingConfirmedMail extends Mailable implements ShouldQueue
             Attachment::fromData(fn () => $this->booking->calendarEvent()->render(), 'booking.ics')
                 ->withMime('text/calendar; charset=utf-8; method=PUBLISH'),
         ];
-    }
-
-    private static function money(int $minor, string $currency): string
-    {
-        $formatter = new \NumberFormatter('en', \NumberFormatter::CURRENCY);
-        $formatter->setAttribute(\NumberFormatter::FRACTION_DIGITS, $minor % 100 === 0 ? 0 : 2);
-
-        return (string) $formatter->formatCurrency($minor / 100, $currency);
     }
 }

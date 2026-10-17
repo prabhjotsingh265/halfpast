@@ -35,6 +35,9 @@ use Illuminate\Support\Str;
  * @property string $currency
  * @property string $code
  * @property string|null $notes
+ * @property CarbonImmutable|null $cancelled_at
+ * @property string|null $cancelled_by
+ * @property int $refund_due
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
@@ -54,6 +57,9 @@ use Illuminate\Support\Str;
     'currency',
     'code',
     'notes',
+    'cancelled_at',
+    'cancelled_by',
+    'refund_due',
 ])]
 class Booking extends Model
 {
@@ -76,6 +82,7 @@ class Booking extends Model
             'ends_at' => 'immutable_datetime',
             'blocked_until' => 'immutable_datetime',
             'hold_expires_at' => 'immutable_datetime',
+            'cancelled_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
         ];

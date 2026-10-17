@@ -4,6 +4,7 @@ import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import BusinessLayout from '@/layouts/business/Layout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 
@@ -21,6 +22,8 @@ void createInertiaApp({
                 return AuthLayout;
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
+            case name.startsWith('business/'):
+                return [AppLayout, BusinessLayout];
             default:
                 return AppLayout;
         }

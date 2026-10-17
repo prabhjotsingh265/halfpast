@@ -84,4 +84,6 @@ export type ManagedBooking = {
     customer_name: string | null;
     customer_email: string | null;
     notes: string | null;
+    /** Signed link to the .ics file, once confirmed. */
+    calendar_url: string | null;
 };

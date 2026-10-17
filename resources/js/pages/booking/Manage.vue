@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { CalendarClock, CircleX, Clock3 } from '@lucide/vue';
+import {
+    CalendarClock,
+    CalendarPlus,
+    CircleX,
+    Clock3,
+    Mail,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import BookingHeader from '@/components/booking/BookingHeader.vue';
 import { Button } from '@/components/ui/button';
@@ -179,9 +185,25 @@ const headline = computed(
                         </dd>
                     </div>
                 </dl>
+
+                <p
+                    v-if="
+                        booking.customer_email && booking.status === 'confirmed'
+                    "
+                    class="mt-4 flex items-center gap-2 border-t pt-4 text-sm text-muted-foreground"
+                >
+                    <Mail class="size-4 shrink-0" />
+                    We've emailed the details to {{ booking.customer_email }}.
+                </p>
             </section>
 
             <div class="mt-6 flex flex-wrap justify-center gap-3">
+                <Button v-if="booking.calendar_url" as-child class="rounded-xl">
+                    <a :href="booking.calendar_url" data-test="add-to-calendar">
+                        <CalendarPlus class="size-4" />
+                        Add to calendar
+                    </a>
+                </Button>
                 <Button as-child variant="outline" class="rounded-xl">
                     <Link
                         :href="

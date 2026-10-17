@@ -26,4 +26,5 @@ Route::middleware('business-from-address')
 
         // The customer's link from their confirmation email.
         Route::get('booking/{booking}', [ManageBookingController::class, 'show'])->middleware('signed')->name('booking.manage');
+        Route::get('booking/{booking}/calendar', [ManageBookingController::class, 'calendar'])->middleware('signed')->name('booking.calendar');
     });

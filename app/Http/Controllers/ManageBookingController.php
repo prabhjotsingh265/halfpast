@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Business;
+use Illuminate\Http\Response as HttpResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,7 +33,17 @@ class ManageBookingController extends Controller
                 'customer_name' => $booking->customer?->name,
                 'customer_email' => $booking->customer?->email,
                 'notes' => $booking->notes,
+                'calendar_url' => $booking->status->value === 'confirmed' ? $booking->calendarUrl() : null,
             ],
+        ]);
+    }
+
+    /** The booking as a calendar file, for "Add to calendar". */
+    public function calendar(Business $business, Booking $booking): HttpResponse
+    {
+        return response($booking->calendarEvent()->render(), 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="booking-'.$booking->code.'.ics"',
         ]);
     }
 }

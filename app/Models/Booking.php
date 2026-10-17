@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BookingStatus;
+use App\Support\Calendar\IcsEvent;
 use App\Tenancy\BelongsToBusiness;
 use Carbon\CarbonImmutable;
 use Database\Factories\BookingFactory;
@@ -173,6 +174,35 @@ class Booking extends Model
             'business' => $this->business()->value('slug'),
             'booking' => $this->code,
         ]);
+    }
+
+    /** The same booking as a calendar file, signed like the manage link. */
+    public function calendarUrl(): string
+    {
+        return URL::signedRoute('booking.calendar', [
+            'business' => $this->business()->value('slug'),
+            'booking' => $this->code,
+        ]);
+    }
+
+    public function calendarEvent(): IcsEvent
+    {
+        $this->loadMissing(['business', 'staff']);
+        $manage = $this->manageUrl();
+
+        return new IcsEvent(
+            uid: $this->code.'@halfpast',
+            start: $this->starts_at,
+            end: $this->ends_at,
+            summary: "{$this->service_name} at {$this->business->name}",
+            description: implode("\n", array_filter([
+                $this->staff ? "With {$this->staff->name}." : null,
+                "Booking reference {$this->displayCode()}.",
+                "View or cancel: {$manage}",
+            ])),
+            location: $this->business->name,
+            url: $manage,
+        );
     }
 
     /** Readable in a list: "7K2Q-9XMB-AT". */

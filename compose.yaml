@@ -32,6 +32,13 @@ services:
         healthcheck:
             disable: true
 
+    # Background work: confirmation emails now, reminders later.
+    queue:
+        <<: *app
+        command: ['php', 'artisan', 'queue:work', '--tries=3', '--backoff=10']
+        healthcheck:
+            disable: true
+
     postgres:
         image: postgres:17-alpine
         environment:

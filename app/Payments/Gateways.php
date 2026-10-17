@@ -27,23 +27,29 @@ class Gateways
     }
 
     /**
+     * Every gateway, set up or not.
+     *
+     * @return array<string, PaymentGateway>
+     */
+    public function all(): array
+    {
+        $gateways = [];
+
+        foreach (array_keys(self::DRIVERS) as $key) {
+            $gateways[$key] = $this->get($key);
+        }
+
+        return $gateways;
+    }
+
+    /**
      * Gateways whose keys are set, so they can be switched on.
      *
      * @return array<string, PaymentGateway>
      */
     public function configured(): array
     {
-        $gateways = [];
-
-        foreach (array_keys(self::DRIVERS) as $key) {
-            $gateway = $this->get($key);
-
-            if ($gateway->isConfigured()) {
-                $gateways[$key] = $gateway;
-            }
-        }
-
-        return $gateways;
+        return array_filter($this->all(), fn (PaymentGateway $gateway) => $gateway->isConfigured());
     }
 
     /**

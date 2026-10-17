@@ -25,6 +25,7 @@ beforeEach(function () {
         'slot_step_minutes' => 60,
         'min_notice_minutes' => 120,
         'booking_horizon_days' => 30,
+        'payment_gateways' => ['test'],
     ]);
     $this->haircut = Service::factory()->for($this->business)->withPercentDeposit(20)
         ->create(['name' => 'Haircut', 'duration_minutes' => 60, 'price' => 3000]);

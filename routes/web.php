@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Business\BookingRulesController;
+use App\Http\Controllers\Business\PaymentMethodsController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\StaffController;
@@ -27,6 +28,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::get('business/booking-rules', [BookingRulesController::class, 'edit'])->name('business.rules.edit');
             Route::put('business/booking-rules', [BookingRulesController::class, 'update'])->name('business.rules.update');
+            Route::get('business/payment-methods', [PaymentMethodsController::class, 'edit'])->name('business.payments.edit');
+            Route::put('business/payment-methods', [PaymentMethodsController::class, 'update'])->name('business.payments.update');
         });
     });
 });

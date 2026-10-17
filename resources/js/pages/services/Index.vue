@@ -17,6 +17,7 @@ defineOptions({
 defineProps<{
     services: Service[];
     currency: string;
+    canTakeDeposits: boolean;
 }>();
 
 function remove(service: Service): void {
@@ -85,6 +86,18 @@ function remove(service: Service): void {
                             variant="outline"
                             class="border-destructive/40 text-destructive"
                             >No one offers this</Badge
+                        >
+                        <Badge
+                            v-if="
+                                service.is_active &&
+                                service.deposit &&
+                                !canTakeDeposits
+                            "
+                            variant="outline"
+                            class="border-destructive/40 text-destructive"
+                            :title="'Switch on a payment method in Business settings so customers can pay the deposit.'"
+                            data-test="needs-payment-method"
+                            >Needs a payment method</Badge
                         >
                     </p>
                     <p

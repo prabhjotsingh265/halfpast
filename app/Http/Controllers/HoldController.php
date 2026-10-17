@@ -10,6 +10,7 @@ use App\Models\Booking;
 use App\Models\Business;
 use App\Models\Service;
 use App\Models\Staff;
+use App\Payments\Gateways;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,9 +27,15 @@ class HoldController extends Controller
 {
     public const SESSION_KEY = 'booking.holds';
 
-    public function store(HoldTimeRequest $request, Business $business, HoldTime $hold): RedirectResponse
+    public function store(HoldTimeRequest $request, Business $business, HoldTime $hold, Gateways $gateways): RedirectResponse
     {
         $service = Service::findOrFail((int) $request->validated('service_id'));
+
+        // A deposit nobody could pay would leave the time held for nothing.
+        if ($service->depositAmount() > 0 && ! $gateways->canTakeDeposits($business)) {
+            return back()->withErrors(['service_id' => "{$service->name} can't be booked online right now."]);
+        }
+
         $staffId = $request->validated('staff_id');
         $staff = $staffId === null ? null : Staff::findOrFail((int) $staffId);
         $startsAt = $request->startsAt();

@@ -7,6 +7,7 @@ use App\Availability\Slot;
 use App\Models\Business;
 use App\Models\Service;
 use App\Models\Staff;
+use App\Payments\Gateways;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -24,7 +25,7 @@ class BookingPageController extends Controller
     /** How many days the strip of dates shows at once. */
     public const DAYS_SHOWN = 14;
 
-    public function __construct(private FindBookableTimes $times) {}
+    public function __construct(private FindBookableTimes $times, private Gateways $gateways) {}
 
     public function show(Request $request, Business $business): Response
     {
@@ -32,7 +33,7 @@ class BookingPageController extends Controller
         $today = CarbonImmutable::now($zone)->toDateString();
         $lastDay = CarbonImmutable::now($zone)->addDays($business->booking_horizon_days)->toDateString();
 
-        $services = $this->bookableServices();
+        $services = $this->bookableServices($business);
         $service = $services->firstWhere('id', $request->integer('service'));
         $staff = $service?->staff->firstWhere('id', $request->integer('staff'));
 
@@ -107,18 +108,22 @@ class BookingPageController extends Controller
 
     /**
      * Services someone can actually be booked for: switched on, with at
-     * least one person taking bookings who does them.
+     * least one person taking bookings who does them, and (if they take a
+     * deposit) a way for the customer to pay it.
      *
      * @return Collection<int, Service>
      */
-    private function bookableServices(): Collection
+    private function bookableServices(Business $business): Collection
     {
+        $canTakeDeposits = $this->gateways->canTakeDeposits($business);
+
         return Service::where('is_active', true)
             ->with(['staff' => fn ($query) => $query->where('staff.is_active', true)->orderBy('staff.position')->orderBy('staff.id')])
             ->orderBy('position')
             ->orderBy('id')
             ->get()
             ->filter(fn (Service $service) => $service->staff->isNotEmpty())
+            ->filter(fn (Service $service) => $canTakeDeposits || $service->depositAmount() === 0)
             ->values();
     }
 

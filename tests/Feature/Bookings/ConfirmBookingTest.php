@@ -21,7 +21,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-10-26 08:00', 'UTC'));
 
-    $this->business = Business::factory()->create(['slug' => 'glow-studio', 'timezone' => 'Europe/London', 'slot_step_minutes' => 60, 'min_notice_minutes' => 60]);
+    $this->business = Business::factory()->create(['slug' => 'glow-studio', 'timezone' => 'Europe/London', 'slot_step_minutes' => 60, 'min_notice_minutes' => 60, 'payment_gateways' => ['test']]);
     $this->trim = Service::factory()->for($this->business)->create(['name' => 'Trim', 'duration_minutes' => 60, 'price' => 2500]);
     $this->colour = Service::factory()->for($this->business)->withFixedDeposit(2000)->create(['name' => 'Colour', 'duration_minutes' => 60, 'price' => 8000]);
     $this->priya = Staff::factory()->for($this->business)->create(['name' => 'Priya']);

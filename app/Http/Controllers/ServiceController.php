@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ServiceRequest;
 use App\Models\Service;
 use App\Models\Staff;
+use App\Payments\Gateways;
 use App\Tenancy\CurrentBusiness;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -13,9 +14,10 @@ use Inertia\Response;
 
 class ServiceController extends Controller
 {
-    public function index(CurrentBusiness $current): Response
+    public function index(CurrentBusiness $current, Gateways $gateways): Response
     {
         return Inertia::render('services/Index', [
+            'canTakeDeposits' => $gateways->canTakeDeposits($current->require()),
             'services' => Service::withCount('staff')->orderBy('position')->orderBy('id')->get()->map(fn (Service $service) => [
                 ...$this->present($service),
                 'deposit' => $service->depositAmount(),

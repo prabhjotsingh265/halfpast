@@ -42,7 +42,7 @@ const secondsLeft = computed(() =>
         : 0,
 );
 const held = computed(() => props.booking.held && secondsLeft.value > 0);
-// The ten minutes are up, but nobody has taken the time, so it can still be booked.
+// The hold is up, but nobody has taken the time, so it can still be booked.
 const lapsedButFree = computed(() => !held.value && props.booking.renewable);
 const canFinish = computed(() => held.value || lapsedButFree.value);
 // Details saved and a deposit to pay: the payment step.

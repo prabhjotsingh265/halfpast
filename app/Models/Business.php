@@ -57,7 +57,7 @@ class Business extends Model
         'min_notice_minutes' => 120,
         'booking_horizon_days' => 60,
         'cancellation_window_hours' => 24,
-        'hold_minutes' => 10,
+        'hold_minutes' => 15,
     ];
 
     /**

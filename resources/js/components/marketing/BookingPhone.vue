@@ -13,7 +13,7 @@ const props = defineProps<{
     currency: Currency;
 }>();
 
-const HOLD_SECONDS = 10 * 60;
+const HOLD_SECONDS = 15 * 60;
 
 const serviceIndex = ref(0);
 const dayIndex = ref(0);
@@ -327,7 +327,7 @@ onBeforeUnmount(() => window.clearInterval(timer));
                             left
                         </template>
                         <template v-else
-                            >Pick a time to hold it for 10 minutes.</template
+                            >Pick a time to hold it for 15 minutes.</template
                         >
                     </p>
                     <button

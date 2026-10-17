@@ -14,7 +14,7 @@ use Illuminate\Console\Command;
  * that person's lapsed holds on the spot, so nobody waits for this.
  */
 #[Signature('bookings:expire-holds')]
-#[Description('Release held times whose ten minutes have run out')]
+#[Description('Release held times whose hold has run out')]
 class ExpireHolds extends Command
 {
     public function handle(): int

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { daylight } from '@/lib/daylight';
 import { clock12, countdown } from '@/lib/time';
 
-const HOLD_SECONDS = 10 * 60;
+const HOLD_SECONDS = 15 * 60;
 
 type Slot = { label: string; hour: number; available: boolean };
 
@@ -38,7 +38,7 @@ const held = ref<string | null>(null);
 const holdEndsAt = ref(0);
 const now = ref(Date.now());
 const speed = ref<1 | 60>(1);
-const message = ref('Pick a time to hold it for ten minutes while you pay.');
+const message = ref('Pick a time to hold it for 15 minutes while you pay.');
 const shaking = ref<string | null>(null);
 
 // 3:30 is the slot someone else grabs a second before you.

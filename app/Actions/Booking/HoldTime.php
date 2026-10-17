@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Keeps a time for a customer while they finish booking: a booking with the
- * status "held" that lapses after the business's hold time (ten minutes by
+ * status "held" that lapses after the business's hold time (15 minutes by
  * default).
  *
  * The time is checked against the rules first (hours, notice, horizon), but

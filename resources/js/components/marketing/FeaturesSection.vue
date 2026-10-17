@@ -36,7 +36,7 @@ import TimeZonesDemo from '@/components/marketing/TimeZonesDemo.vue';
                 <FeatureCard
                     class="lg:col-span-2"
                     eyebrow="Held while they pay"
-                    title="Ten minutes to pay, and nobody can take it."
+                    title="Fifteen minutes to pay, and nobody can take it."
                     text="Picking a time holds it while the customer pays the deposit. If they wander off, it frees itself again."
                 >
                     <HoldRingDemo />

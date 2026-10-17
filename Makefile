@@ -14,16 +14,18 @@ RUN := $(COMPOSE) exec app
 help: ## List the available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  make %-10s %s\n", $$1, $$2}'
 
-setup: ## First run on a new machine: build, install, migrate
+setup: ## First run on a new machine: build, install, migrate, add the demo salon
 	@test -f .env || cp .env.example .env
 	$(COMPOSE) build
 	$(COMPOSE) run --rm --no-deps app composer install
 	$(COMPOSE) run --rm --no-deps app npm install
 	$(COMPOSE) up -d
 	@grep -q '^APP_KEY=base64' .env || $(RUN) php artisan key:generate
-	$(RUN) php artisan migrate --no-interaction
+	$(RUN) php artisan migrate --seed --no-interaction
 	@echo ""
 	@echo "Halfpast is running at http://localhost:$${APP_PORT:-8000}"
+	@echo "Demo login:            demo@halfpast.test / password"
+	@echo "Demo booking page:     http://localhost:$${APP_PORT:-8000}/kesar-beauty-lounge"
 	@echo "Emails are caught at   http://localhost:$${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}"
 
 up: ## Start every container

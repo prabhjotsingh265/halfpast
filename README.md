@@ -14,13 +14,16 @@ cd halfpast
 make setup
 ```
 
-`make setup` builds the image, installs the PHP and JavaScript dependencies, creates `.env`, and runs the migrations. When it finishes:
+`make setup` builds the image, installs the PHP and JavaScript dependencies, creates `.env`, runs the migrations and adds a demo salon. When it finishes:
 
-| Address               | What's there                                    |
-| --------------------- | ----------------------------------------------- |
-| http://localhost:8000 | The app                                         |
-| http://localhost:5173 | Vite dev server (hot reload)                    |
-| http://localhost:8025 | Mailpit, which catches every email sent locally |
+| Address                                   | What's there                                    |
+| ----------------------------------------- | ----------------------------------------------- |
+| http://localhost:8000                     | The app                                         |
+| http://localhost:8000/kesar-beauty-lounge | The demo salon's booking page                   |
+| http://localhost:5173                     | Vite dev server (hot reload)                    |
+| http://localhost:8025                     | Mailpit, which catches every email sent locally |
+
+Log in as `demo@halfpast.test` with the password `password` to see the salon from the owner's side. `make fresh` resets it.
 
 On Windows, run the commands from a WSL 2 terminal.
 

@@ -38,7 +38,8 @@ it('lets exactly one of twenty simultaneous holds through', function () {
     // Each child opens its own connection; none may share the parent's.
     DB::disconnect();
 
-    $go = microtime(true) + 2.0;
+    // Everyone starts together, a moment after the last one is ready.
+    $go = microtime(true) + 3.0;
     $children = [];
 
     foreach (range(1, 20) as $customer) {
@@ -47,7 +48,12 @@ it('lets exactly one of twenty simultaneous holds through', function () {
         if ($pid === 0) {
             try {
                 DB::connection()->getPdo();
-                time_sleep_until($go);
+
+                // On a slow machine the moment may already have passed;
+                // waiting for a time in the past is an error in PHP.
+                if (microtime(true) < $go) {
+                    time_sleep_until($go);
+                }
                 app(HoldTime::class)->handle($business, $service, null, $startsAt);
                 $outcome = 'held';
             } catch (TimeNotAvailable) {

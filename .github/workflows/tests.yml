@@ -77,3 +77,16 @@ jobs:
 
       - name: Run CI Checks
         run: composer ci:check
+
+      # Failing tests become annotations on the run, readable without the full log.
+      - name: Report failing tests
+        if: failure() && hashFiles('storage/logs/junit.xml') != ''
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          for case in ET.parse('storage/logs/junit.xml').iter('testcase'):
+              for problem in list(case.findall('failure')) + list(case.findall('error')):
+                  text = (problem.text or problem.get('message') or '').strip().splitlines()
+                  detail = ' / '.join(line.strip() for line in text[:6])[:900]
+                  print(f"::error title={case.get('class', '')}::{case.get('name', '')}: {detail}")
+          PY

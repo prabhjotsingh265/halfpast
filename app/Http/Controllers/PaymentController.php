@@ -13,6 +13,7 @@ use App\Models\Payment;
 use App\Payments\GatewayError;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -49,7 +50,7 @@ class PaymentController extends Controller
         }
 
         try {
-            [, $checkout] = $this->start->handle($business, $booking, $gateway);
+            [$payment, $checkout] = $this->start->handle($business, $booking, $gateway);
         } catch (PaymentNotStarted $e) {
             return $this->backToCheckout($business, $booking, $e->getMessage());
         }
@@ -58,7 +59,11 @@ class PaymentController extends Controller
             return Inertia::location($checkout->redirectUrl);
         }
 
-        return redirect()->route('booking.checkout', [$business, $booking]);
+        // A pop-up gateway (Razorpay) opens on the checkout page itself. Its
+        // settings wait on the server for as long as the payment window.
+        Cache::put(self::widgetKey($payment->id), $checkout->widget, now()->addMinutes((int) config('payments.payment_window_minutes')));
+
+        return redirect()->route('booking.checkout', [$business, $booking, 'pay' => $payment->id]);
     }
 
     /**
@@ -93,5 +98,10 @@ class PaymentController extends Controller
     private function backToCheckout(Business $business, Booking $booking, string $message): RedirectResponse
     {
         return redirect()->route('booking.checkout', [$business, $booking])->withErrors(['payment' => $message]);
+    }
+
+    public static function widgetKey(int $paymentId): string
+    {
+        return "payments.widget.{$paymentId}";
     }
 }

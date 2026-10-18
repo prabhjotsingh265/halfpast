@@ -24,7 +24,12 @@ it('shows the owner every gateway and whether it can be switched on', function (
             ->component('business/PaymentMethods')
             ->where('currency', 'GBP')
             ->where('depositServices', 1)
-            ->where('gateways.0', ['key' => 'test', 'label' => 'Test payment', 'configured' => true, 'supportsCurrency' => true, 'enabled' => false]));
+            ->where('gateways', fn ($gateways) => collect($gateways)->keyBy('key')->map(fn ($g) => [$g['configured'], $g['supportsCurrency'], $g['upcoming']])->all() === [
+                'stripe' => [false, true, false],
+                'razorpay' => [false, false, false],
+                'paypal' => [false, true, true],
+                'test' => [true, true, false],
+            ]));
 });
 
 it('switches payment methods on and off', function () {
@@ -45,7 +50,7 @@ it("won't switch on a gateway that isn't set up or doesn't exist", function (str
         ->assertSessionHasErrors('gateways.0');
 
     expect($this->business->fresh()->payment_gateways)->toBe([]);
-})->with(['stripe', 'bitcoin']);
+})->with(['stripe', 'paypal', 'bitcoin']);
 
 it('only offers services with a deposit once customers can pay it', function () {
     $this->get('/glow-studio')->assertInertia(fn (Assert $page) => $page->has('services', 1)->where('services.0.name', 'Trim'));

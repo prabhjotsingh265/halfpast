@@ -9,7 +9,7 @@ RUN := $(COMPOSE) exec app
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup up down restart build logs shell artisan composer npm migrate fresh test lint
+.PHONY: help setup up down restart build logs shell artisan composer npm migrate fresh test lint stripe-webhooks
 
 help: ## List the available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  make %-10s %s\n", $$1, $$2}'
@@ -66,3 +66,14 @@ test: ## Run the test suite
 lint: ## Check code style and static analysis
 	$(RUN) vendor/bin/pint --test
 	$(RUN) vendor/bin/phpstan analyse --memory-limit=1G
+
+stripe-webhooks: ## Forward Stripe test webhooks to the app (saves the signing secret in .env)
+	@secret=$$($(COMPOSE) --profile stripe run --rm --no-deps stripe listen --print-secret 2>/dev/null | tr -d '\r' | tail -1); \
+	case "$$secret" in whsec_*) ;; *) echo "Couldn't get a webhook secret from Stripe. Is STRIPE_SECRET set in .env?"; exit 1;; esac; \
+	if grep -q '^STRIPE_WEBHOOK_SECRET=' .env; then \
+		sed -i.bak "s|^STRIPE_WEBHOOK_SECRET=.*|STRIPE_WEBHOOK_SECRET=$$secret|" .env && rm -f .env.bak; \
+	else echo "STRIPE_WEBHOOK_SECRET=$$secret" >> .env; fi
+	$(RUN) php artisan config:clear
+	$(COMPOSE) restart queue scheduler
+	$(COMPOSE) --profile stripe up -d stripe
+	@echo "Stripe test webhooks now reach http://localhost:$${APP_PORT:-8000}/webhooks/stripe"

@@ -46,6 +46,21 @@ services:
         healthcheck:
             disable: true
 
+    # Optional. Forwards Stripe's test-mode webhooks to the app, so payments
+    # settle locally the way they will in production. Start it with
+    # `make stripe-webhooks`; it needs STRIPE_SECRET in .env.
+    stripe:
+        image: stripe/stripe-cli:v1.50.11
+        profiles: ['stripe']
+        environment:
+            STRIPE_API_KEY: ${STRIPE_SECRET:-}
+        command:
+            - listen
+            - --forward-to
+            - http://app:8000/webhooks/stripe
+            - --events
+            - checkout.session.completed,checkout.session.expired,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed
+
     postgres:
         image: postgres:17-alpine
         environment:

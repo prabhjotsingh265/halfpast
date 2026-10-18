@@ -9,7 +9,7 @@ import {
     TimerOff,
     TriangleAlert,
 } from '@lucide/vue';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import BookingHeader from '@/components/booking/BookingHeader.vue';
 import DetailsForm from '@/components/booking/DetailsForm.vue';
 import HoldRing from '@/components/booking/HoldRing.vue';
@@ -19,6 +19,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { timeIn, zoneCity } from '@/lib/booking';
 import { formatMoney } from '@/lib/money';
 import { countdown, duration } from '@/lib/time';
+import type { RazorpayWidget } from '@/lib/razorpay';
+import { openRazorpay } from '@/lib/razorpay';
 import { localZone } from '@/lib/zones';
 import type {
     CheckoutBooking,
@@ -30,6 +32,8 @@ const props = defineProps<{
     booking: CheckoutBooking;
     customer: CheckoutCustomer | null;
     gateways: { key: string; label: string }[];
+    upcoming: { key: string; label: string }[];
+    widget: RazorpayWidget | null;
     payment: CheckoutPayment | null;
     cancelled: boolean;
     returned: boolean;
@@ -122,6 +126,31 @@ function watchPayment(): void {
 }
 
 onMounted(watchPayment);
+
+// After "Pay" with Razorpay, its pop-up opens here. Paying sends the customer
+// to the same return address as a redirect gateway; closing it keeps the hold.
+const widgetError = ref<string | null>(null);
+
+// Watched rather than read on mount: Inertia keeps this page alive when the
+// "Pay" request comes back to it, so the pop-up settings arrive as new props.
+watch(
+    () => props.widget,
+    (widget) => {
+        if (!widget) {
+            return;
+        }
+
+        widgetError.value = null;
+        openRazorpay(widget, {
+            paid: (response) => router.get(widget.return_url, response),
+            dismissed: () => router.get(widget.cancel_url),
+        }).catch(() => {
+            widgetError.value =
+                "Razorpay couldn't be opened. Check your connection and try again, or choose another way to pay.";
+        });
+    },
+    { immediate: true },
+);
 
 function pay(gateway: string): void {
     startingWith.value = gateway;
@@ -389,7 +418,27 @@ const againUrl = computed(() =>
                             {{ paymentWindow }} minutes.
                         </p>
                     </div>
-                    <InputError :message="paymentError ?? undefined" />
+                    <div
+                        v-if="upcoming.length > 0"
+                        class="grid gap-2"
+                        data-test="upcoming-gateways"
+                    >
+                        <Button
+                            v-for="gateway in upcoming"
+                            :key="gateway.key"
+                            type="button"
+                            variant="outline"
+                            size="lg"
+                            class="w-full rounded-xl"
+                            disabled
+                            :data-test="`upcoming-${gateway.key}`"
+                        >
+                            {{ gateway.label }} · coming soon
+                        </Button>
+                    </div>
+                    <InputError
+                        :message="paymentError ?? widgetError ?? undefined"
+                    />
                 </section>
             </div>
 

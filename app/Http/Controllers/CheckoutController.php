@@ -6,6 +6,7 @@ use App\Actions\Booking\ConfirmBooking;
 use App\Actions\Booking\FindBookableTimes;
 use App\Actions\Booking\HoldAgain;
 use App\Enums\BookingStatus;
+use App\Enums\PaymentStatus;
 use App\Http\Requests\CustomerDetailsRequest;
 use App\Models\Booking;
 use App\Models\Business;
@@ -17,6 +18,7 @@ use App\Payments\Gateways;
 use App\Payments\PaymentGateway;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -67,6 +69,13 @@ class CheckoutController extends Controller
                 fn (PaymentGateway $gateway) => ['key' => $gateway->key(), 'label' => $gateway->label()],
                 $this->gateways->for($business),
             )),
+            // Planned but not set up yet, shown as "coming soon".
+            'upcoming' => array_values(array_map(
+                fn (PaymentGateway $gateway) => ['key' => $gateway->key(), 'label' => $gateway->label()],
+                array_diff_key($this->gateways->upcoming(), $this->gateways->for($business)),
+            )),
+            // The pop-up to open straight away, after "Pay" with Razorpay.
+            'widget' => $this->widget($request, $payment),
             'payment' => $payment === null ? null : [
                 'status' => $payment->status->value,
                 'outcome' => $payment->outcome?->value,
@@ -162,5 +171,21 @@ class CheckoutController extends Controller
         }
 
         return $booking;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function widget(Request $request, ?Payment $latest): ?array
+    {
+        $paymentId = $request->integer('pay');
+
+        if ($paymentId === 0 || $latest === null || $latest->id !== $paymentId || $latest->status !== PaymentStatus::Pending) {
+            return null;
+        }
+
+        $widget = Cache::get(PaymentController::widgetKey($paymentId));
+
+        return is_array($widget) ? $widget : null;
     }
 }

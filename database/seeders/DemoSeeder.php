@@ -41,8 +41,9 @@ class DemoSeeder extends Seeder
             'timezone' => 'Asia/Kolkata',
             'currency' => 'INR',
         ]);
-        // The test gateway, so deposits can be tried out without real keys.
-        $business->update(['slot_step_minutes' => 15, 'min_notice_minutes' => 60, 'payment_gateways' => ['test']]);
+        // Stripe and Razorpay are offered when their test keys are in .env;
+        // the test gateway works everywhere else.
+        $business->update(['slot_step_minutes' => 15, 'min_notice_minutes' => 60, 'payment_gateways' => ['stripe', 'razorpay', 'test']]);
         app(CurrentBusiness::class)->set($business);
 
         // The owner was added as the first team member; give her real hours.

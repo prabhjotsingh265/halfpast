@@ -3,6 +3,9 @@
 namespace App\Payments;
 
 use App\Models\Business;
+use App\Payments\Gateways\PayPalGateway;
+use App\Payments\Gateways\RazorpayGateway;
+use App\Payments\Gateways\StripeGateway;
 use App\Payments\Gateways\TestGateway;
 use Illuminate\Contracts\Container\Container;
 use InvalidArgumentException;
@@ -14,8 +17,14 @@ class Gateways
 {
     /** @var array<string, class-string<PaymentGateway>> */
     private const DRIVERS = [
+        'stripe' => StripeGateway::class,
+        'razorpay' => RazorpayGateway::class,
+        'paypal' => PayPalGateway::class,
         'test' => TestGateway::class,
     ];
+
+    /** Planned, but waiting on keys to be built and tested against. */
+    public const UPCOMING = ['paypal'];
 
     public function __construct(private Container $container) {}
 
@@ -65,6 +74,20 @@ class Gateways
             fn (PaymentGateway $gateway) => in_array($gateway->key(), $business->payment_gateways, true)
                 && $gateway->supports($business->currency),
         );
+    }
+
+    /**
+     * Gateways to show as "coming soon" on the payment step.
+     *
+     * @return array<string, PaymentGateway>
+     */
+    public function upcoming(): array
+    {
+        if (! config('payments.show_upcoming')) {
+            return [];
+        }
+
+        return array_filter($this->all(), fn (PaymentGateway $gateway) => in_array($gateway->key(), self::UPCOMING, true));
     }
 
     public function canTakeDeposits(Business $business): bool

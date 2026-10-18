@@ -27,6 +27,27 @@ Log in as `demo@halfpast.test` with the password `password` to see the salon fro
 
 On Windows, run the commands from a WSL 2 terminal.
 
+## Payments in test mode
+
+Deposits can be taken through Stripe and Razorpay (PayPal is on the way). Without any keys, a built-in test gateway is used, so the whole flow works out of the box.
+
+To use the real gateways in test mode, add their **test** keys to `.env`. Never commit them:
+
+| Setting                                  | Where it comes from                                            |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| `STRIPE_KEY`, `STRIPE_SECRET`            | Stripe Dashboard → Developers → API keys (test mode)           |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | Razorpay Dashboard → Account & Settings → API keys (test mode) |
+
+Then switch them on under **Business settings → Payment methods**.
+
+- **Stripe webhooks, locally:** `make stripe-webhooks` starts Stripe's CLI, saves the signing secret in `.env`, and forwards test webhooks to the app.
+- **Razorpay webhooks** need a public address, so locally the app settles Razorpay payments when the customer returns, and a check runs every minute for any it hasn't heard back about.
+
+Test details:
+
+- **Stripe:** card `4242 4242 4242 4242`, any future date, any CVC.
+- **Razorpay:** Netbanking, any bank, then **Success** on the test bank page.
+
 ## Everyday commands
 
 | Command                       | What it does                                  |

@@ -13,6 +13,7 @@ type GatewayOption = {
     configured: boolean;
     supportsCurrency: boolean;
     enabled: boolean;
+    upcoming: boolean;
 };
 
 const props = defineProps<{
@@ -50,6 +51,10 @@ function toggle(gateway: GatewayOption): void {
 }
 
 function why(gateway: GatewayOption): string | null {
+    if (gateway.upcoming) {
+        return 'Coming soon.';
+    }
+
     if (!gateway.configured) {
         return 'Its keys haven’t been added yet.';
     }

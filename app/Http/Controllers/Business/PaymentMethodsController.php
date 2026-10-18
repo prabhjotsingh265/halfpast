@@ -33,6 +33,7 @@ class PaymentMethodsController extends Controller
                 'configured' => $gateway->isConfigured(),
                 'supportsCurrency' => $gateway->supports($business->currency),
                 'enabled' => in_array($gateway->key(), $business->payment_gateways, true),
+                'upcoming' => in_array($gateway->key(), Gateways::UPCOMING, true),
             ], $this->gateways->all())),
             'depositServices' => Service::where('deposit_type', '!=', 'none')->where('is_active', true)->count(),
         ]);

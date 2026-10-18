@@ -7,12 +7,17 @@ use App\Http\Middleware\ProtectDemoAccounts;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetCurrentBusiness;
 use App\Http\Middleware\UseBusinessFromAddress;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -44,6 +49,19 @@ return Application::configure(basePath: dirname(__DIR__))
             SetCurrentBusiness::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+        ]);
+
+        // The platform's own tools (Horizon): sessions and CSRF from `web`, but
+        // none of the app's middleware. They run inline scripts the content
+        // security policy would block, so they get every header but that one.
+        $middleware->group('tools', [
+            EncryptCookies::class,
+            AddQueuedCookiesToResponse::class,
+            StartSession::class,
+            ShareErrorsFromSession::class,
+            PreventRequestForgery::class,
+            SubstituteBindings::class,
+            SecurityHeaders::class.':without-csp',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

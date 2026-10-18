@@ -2,14 +2,17 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\SecurityHeaders;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -20,7 +23,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 /**
  * The platform admin at /admin, for whoever runs Halfpast: every business,
  * booking and payment, the webhook log and jobs that failed. Read-only,
- * apart from retrying or clearing failed jobs.
+ * apart from retrying or clearing failed jobs. Horizon is linked from it.
  */
 class AdminPanelProvider extends PanelProvider
 {
@@ -43,6 +46,13 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([])
+            ->navigationItems([
+                NavigationItem::make('Queues')
+                    ->url(fn (): string => route('horizon.index'))
+                    ->icon(Heroicon::OutlinedQueueList)
+                    ->group('System')
+                    ->sort(2),
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -53,6 +63,7 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                SecurityHeaders::class.':without-csp',
             ])
             ->authMiddleware([
                 Authenticate::class,

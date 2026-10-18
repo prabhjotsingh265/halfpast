@@ -34,10 +34,11 @@ services:
         healthcheck:
             disable: true
 
-    # Background work: confirmation emails now, reminders later.
+    # Background work: emails, live updates, payment checks. Horizon runs the
+    # workers; its dashboard is at /horizon for platform admins.
     queue:
         <<: *app
-        command: ['php', 'artisan', 'queue:work', '--tries=3', '--backoff=10']
+        command: ['php', 'artisan', 'horizon']
         healthcheck:
             disable: true
 

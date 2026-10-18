@@ -45,7 +45,10 @@ it('leaves the admin to its own rules', function () {
     $admin = User::factory()->create();
     $admin->forceFill(['is_admin' => true])->save();
 
-    $this->actingAs($admin)->get('/admin')->assertOk()->assertHeaderMissing('Content-Security-Policy');
+    $this->actingAs($admin)->get('/admin')
+        ->assertOk()
+        ->assertHeaderMissing('Content-Security-Policy')
+        ->assertHeader('X-Frame-Options', 'DENY');
 });
 
 it('remembers HTTPS only in production, and the policy can be switched off', function () {

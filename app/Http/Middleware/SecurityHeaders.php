@@ -14,14 +14,15 @@ use Symfony\Component\HttpFoundation\Response;
  * The policy allows scripts from this site (inline ones only with this
  * page's nonce) and Razorpay's checkout, which runs in a pop-up on our
  * page. Stripe and PayPal take payment on their own sites, so they need
- * nothing here. The platform admin has its own middleware and isn't
- * covered: its framework needs looser rules.
+ * nothing here. The platform admin and its tools get every header but
+ * the policy (`SecurityHeaders:without-csp`): their frameworks need
+ * looser rules.
  */
 class SecurityHeaders
 {
     private const RAZORPAY = ['https://checkout.razorpay.com', 'https://api.razorpay.com', 'https://lumberjack.razorpay.com', 'https://cdn.razorpay.com'];
 
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, ?string $mode = null): Response
     {
         Vite::useCspNonce();
 
@@ -37,7 +38,7 @@ class SecurityHeaders
             $headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
-        if (config('security.csp') && str_contains((string) $headers->get('Content-Type'), 'text/html')) {
+        if ($mode !== 'without-csp' && config('security.csp') && str_contains((string) $headers->get('Content-Type'), 'text/html')) {
             $headers->set('Content-Security-Policy', $this->policy((string) Vite::cspNonce()));
         }
 

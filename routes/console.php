@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Schedule;
 // The scheduler checking in, so /up and the admin know it's running.
 Schedule::call(fn () => Heartbeat::beat())->everyMinute()->name('heartbeat');
 
+// Queue throughput and wait times, for Horizon's charts.
+Schedule::command('horizon:snapshot')->everyFiveMinutes();
+
 Schedule::command('bookings:expire-holds')->everyMinute()->withoutOverlapping();
 
 // The safety net under webhooks: payments nobody has heard back about.

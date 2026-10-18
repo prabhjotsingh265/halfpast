@@ -38,10 +38,16 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
-    /** Only the people who run the platform get into /admin; never a shared demo login. */
-    public function canAccessPanel(Panel $panel): bool
+    /** The people who run the platform: never a shared demo login, whatever its flags say. */
+    public function isPlatformAdmin(): bool
     {
         return $this->is_admin && ! $this->is_demo;
+    }
+
+    /** Only platform admins get into /admin. */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->isPlatformAdmin();
     }
 
     /**

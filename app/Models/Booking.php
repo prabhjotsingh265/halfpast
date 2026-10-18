@@ -144,6 +144,16 @@ class Booking extends Model
     }
 
     /**
+     * The reminders sent for it, one per kind.
+     *
+     * @return HasMany<BookingReminder, $this>
+     */
+    public function reminders(): HasMany
+    {
+        return $this->hasMany(BookingReminder::class);
+    }
+
+    /**
      * @return HasMany<Payment, $this>
      */
     public function payments(): HasMany

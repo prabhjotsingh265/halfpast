@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureUserHasBusiness;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ProtectDemoAccounts;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetCurrentBusiness;
 use App\Http\Middleware\UseBusinessFromAddress;
 use Illuminate\Foundation\Application;
@@ -37,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->web(append: [
+            SecurityHeaders::class,
             ProtectDemoAccounts::class,
             HandleAppearance::class,
             SetCurrentBusiness::class,

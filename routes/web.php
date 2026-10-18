@@ -5,6 +5,7 @@ use App\Http\Controllers\Business\BookingRulesController;
 use App\Http\Controllers\Business\PaymentMethodsController;
 use App\Http\Controllers\CalendarBlockController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EarningsController;
 use App\Http\Controllers\NewBookingController;
 use App\Http\Controllers\OnboardingController;
@@ -23,7 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('onboarding.address');
 
     Route::middleware('has-business')->group(function () {
-        Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+        Route::get('dashboard', DashboardController::class)->name('dashboard');
         Route::get('calendar', [CalendarController::class, 'index'])->name('calendar');
         Route::post('calendar/blocks', [CalendarBlockController::class, 'store'])->name('calendar.blocks.store');
         Route::delete('calendar/blocks/{timeOff}', [CalendarBlockController::class, 'destroy'])->name('calendar.blocks.destroy');

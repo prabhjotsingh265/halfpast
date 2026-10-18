@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { ChevronLeft, ChevronRight, Plus } from '@lucide/vue';
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import AddSheet from '@/components/calendar/AddSheet.vue';
 import BookingList from '@/components/calendar/BookingList.vue';
 import BookingSheet from '@/components/calendar/BookingSheet.vue';
 import DayGrid from '@/components/calendar/DayGrid.vue';
+import LiveBadge from '@/components/calendar/LiveBadge.vue';
 import TimeOffSheet from '@/components/calendar/TimeOffSheet.vue';
 import WeekGrid from '@/components/calendar/WeekGrid.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { zoneCity } from '@/lib/booking';
 import { addDays, formatDate, toDate } from '@/lib/dates';
-import { live, liveState } from '@/lib/live';
+import { useLiveCalendar } from '@/composables/useLiveCalendar';
 import type {
     CalendarBooking,
     CalendarStaff,
@@ -59,48 +60,12 @@ const canBook = computed(() => props.newBooking.staff.length > 0);
 const page = usePage();
 const businessName = computed(() => page.props.business?.name ?? '');
 
-// Live updates: when a booking or time off changes on any day on screen,
-// those days reload (a beat later, so a burst of changes reloads once).
-const liveOn = Boolean(import.meta.env.VITE_REVERB_APP_KEY);
-let channel: string | null = null;
-let reloadTimer = 0;
-
-function reloadSoon(): void {
-    window.clearTimeout(reloadTimer);
-    reloadTimer = window.setTimeout(
-        () => router.reload({ only: ['bookings', 'timeOff', 'staff'] }),
-        300,
-    );
-}
-
-onMounted(() => {
-    const echo = live();
-    const businessId = page.props.business?.id;
-
-    if (!echo || !businessId) {
-        return;
-    }
-
-    channel = `business.${businessId}.calendar`;
-    echo.private(channel).listen(
-        '.calendar.changed',
-        (change: { from: string; to: string }) => {
-            const first = props.days[0];
-            const last = props.days[props.days.length - 1];
-
-            if (change.to >= first && change.from <= last) {
-                reloadSoon();
-            }
-        },
-    );
-});
-
-onBeforeUnmount(() => {
-    window.clearTimeout(reloadTimer);
-
-    if (channel) {
-        live()?.leave(channel);
-    }
+// Live updates: when a booking or time off changes on a day on screen, it
+// reloads.
+useLiveCalendar({
+    only: ['bookings', 'timeOff', 'staff'],
+    affects: (from, to) =>
+        to >= props.days[0] && from <= props.days[props.days.length - 1],
 });
 
 // Time off opened from the calendar.
@@ -257,35 +222,7 @@ const staffName = computed(() => {
                 title="Calendar"
                 :description="`Times are ${zoneCity(timezone)} time.`"
             />
-            <p
-                v-if="liveOn"
-                class="flex items-center gap-1.5 text-xs text-muted-foreground"
-                :title="
-                    liveState === 'connected'
-                        ? 'New bookings appear here as they come in.'
-                        : 'Reconnecting. Reload the page if this stays.'
-                "
-                data-test="live"
-                :data-state="liveState"
-            >
-                <span
-                    class="size-2 rounded-full"
-                    :class="
-                        liveState === 'connected'
-                            ? 'bg-success'
-                            : liveState === 'connecting'
-                              ? 'animate-pulse bg-sun'
-                              : 'bg-muted-foreground/40'
-                    "
-                />
-                {{
-                    liveState === 'connected'
-                        ? 'Live'
-                        : liveState === 'connecting'
-                          ? 'Connecting'
-                          : 'Not live'
-                }}
-            </p>
+            <LiveBadge />
         </div>
 
         <div class="flex flex-wrap items-center gap-2">

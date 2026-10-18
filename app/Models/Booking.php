@@ -131,6 +131,21 @@ class Booking extends Model
         });
     }
 
+    /**
+     * Bookings a calendar shows: confirmed, finished or missed ones, and
+     * holds that haven't run out.
+     *
+     * @param  Builder<Booking>  $query
+     */
+    public function scopeShownOnCalendar(Builder $query): void
+    {
+        $query->where(fn (Builder $query) => $query
+            ->whereIn('status', [BookingStatus::Confirmed, BookingStatus::Completed, BookingStatus::NoShow])
+            ->orWhere(fn (Builder $query) => $query
+                ->where('status', BookingStatus::Held)
+                ->where('hold_expires_at', '>', CarbonImmutable::now())));
+    }
+
     public function isHeld(): bool
     {
         return $this->status === BookingStatus::Held

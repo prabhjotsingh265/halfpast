@@ -28,7 +28,7 @@ const page = usePage();
 
 const mainNavItems = computed<NavItem[]>(() => [
     {
-        title: 'Dashboard',
+        title: 'Today',
         href: route('dashboard'),
         icon: LayoutGrid,
     },

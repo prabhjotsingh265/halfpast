@@ -288,7 +288,11 @@ const depositPreview = computed(() => {
                             :value="member.id"
                             class="sr-only"
                         />
-                        <MemberAvatar :name="member.name" size="xs" />
+                        <MemberAvatar
+                            :name="member.name"
+                            :photo="member.photo_url"
+                            size="xs"
+                        />
                         {{ member.name }}
                     </label>
                 </div>

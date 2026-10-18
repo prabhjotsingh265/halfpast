@@ -39,6 +39,7 @@ export type CalendarView = 'day' | 'week' | 'list';
 export type CalendarStaff = {
     id: number;
     name: string;
+    photo_url?: string | null;
     /** Working hours for each date shown, in minutes since midnight. */
     hours: Record<string, [number, number][]>;
 };

@@ -87,7 +87,10 @@ function remove(member: StaffMember): void {
                 :data-test="`member-${member.id}`"
             >
                 <div class="flex items-start gap-3">
-                    <MemberAvatar :name="member.name" />
+                    <MemberAvatar
+                        :name="member.name"
+                        :photo="member.photo_url"
+                    />
                     <div class="min-w-0 flex-1">
                         <p
                             class="flex flex-wrap items-center gap-2 font-semibold"

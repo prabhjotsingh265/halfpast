@@ -32,6 +32,7 @@ const emit = defineEmits<{ select: [id: number | null] }>();
                     v-for="member in staff.slice(0, 3)"
                     :key="member.id"
                     :name="member.name"
+                    :photo="member.photo_url"
                     size="xs"
                     class="ring-2 ring-background"
                 />
@@ -60,7 +61,11 @@ const emit = defineEmits<{ select: [id: number | null] }>();
             :data-test="`staff-${member.id}`"
             @click="emit('select', member.id)"
         >
-            <MemberAvatar :name="member.name" size="xs" />
+            <MemberAvatar
+                :name="member.name"
+                :photo="member.photo_url"
+                size="xs"
+            />
             {{ member.name }}
         </button>
     </div>

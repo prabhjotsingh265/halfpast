@@ -12,6 +12,7 @@ use App\Http\Controllers\NewBookingController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\StaffPhotoController;
 use App\Http\Controllers\TimeOffController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +42,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::middleware('can:manage-business')->group(function () {
             Route::resource('services', ServiceController::class)->except('show');
             Route::resource('staff', StaffController::class)->except('show');
+            Route::post('staff/{staff}/photo', [StaffPhotoController::class, 'store'])->name('staff.photo.store');
+            Route::delete('staff/{staff}/photo', [StaffPhotoController::class, 'destroy'])->name('staff.photo.destroy');
             Route::resource('time-off', TimeOffController::class)->only(['index', 'store', 'destroy']);
             Route::resource('customers', CustomerController::class)->only(['index', 'show', 'update', 'destroy']);
 

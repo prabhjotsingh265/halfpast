@@ -145,7 +145,11 @@ onMounted(async () => {
                 :key="member.id"
                 class="sticky top-0 z-20 flex items-center gap-2 border-b border-l bg-card px-3 py-2"
             >
-                <MemberAvatar :name="member.name" size="xs" />
+                <MemberAvatar
+                    :name="member.name"
+                    :photo="member.photo_url"
+                    size="xs"
+                />
                 <span class="truncate text-sm font-medium">{{
                     member.name
                 }}</span>

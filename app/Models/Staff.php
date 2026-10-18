@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Someone customers can book: a stylist, a physio, a tutor.
@@ -18,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $business_id
  * @property int|null $user_id
+ * @property string|null $photo_path A square WebP on the public disk.
  * @property string $name
  * @property string|null $bio
  * @property bool $is_active
@@ -67,6 +69,12 @@ class Staff extends Model
     public function timeOff(): HasMany
     {
         return $this->hasMany(TimeOff::class);
+    }
+
+    /** Where the photo can be loaded from, or null to show initials. */
+    public function photoUrl(): ?string
+    {
+        return $this->photo_path === null ? null : Storage::disk('public')->url($this->photo_path);
     }
 
     /**

@@ -98,6 +98,7 @@ class CalendarController extends Controller
             'staff' => $staff->map(fn (Staff $member) => [
                 'id' => $member->id,
                 'name' => $member->name,
+                'photo_url' => $member->photoUrl(),
                 'hours' => $days->mapWithKeys(fn (string $day) => [
                     $day => $weekly[$member->id][CarbonImmutable::parse($day)->isoWeekday()] ?? [],
                 ]),

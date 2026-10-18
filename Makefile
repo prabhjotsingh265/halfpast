@@ -21,6 +21,7 @@ setup: ## First run on a new machine: build, install, migrate, add the demo salo
 	$(COMPOSE) run --rm --no-deps app npm install
 	$(COMPOSE) up -d
 	@grep -q '^APP_KEY=base64' .env || $(RUN) php artisan key:generate
+	@test -L public/storage || $(RUN) php artisan storage:link
 	$(RUN) php artisan migrate --seed --no-interaction
 	@echo ""
 	@echo "Halfpast is running at http://localhost:$${APP_PORT:-8000}"

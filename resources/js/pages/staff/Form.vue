@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { Check } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Camera, Check } from '@lucide/vue';
+import { computed, onBeforeUnmount, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import MemberAvatar from '@/components/staff/MemberAvatar.vue';
@@ -30,6 +30,9 @@ const editing = props.member !== null;
 const zone = (usePage().props.business?.timezone ?? '').replaceAll('_', ' ');
 
 const form = useForm({
+    // A new person's photo goes up with the rest; someone saved already
+    // changes theirs straight away, below.
+    photo: null as File | null,
     name: props.member?.name ?? '',
     bio: props.member?.bio ?? '',
     is_active: props.member?.is_active ?? true,
@@ -38,6 +41,78 @@ const form = useForm({
         props.member?.service_ids ??
         props.services.filter((s) => s.is_active).map((s) => s.id),
 });
+
+// The photo: a preview of a new one, or the saved one.
+const preview = ref<string | null>(null);
+const photoError = ref<string | null>(null);
+const uploading = ref(false);
+const photoInput = ref<HTMLInputElement | null>(null);
+
+const shownPhoto = computed(
+    () => preview.value ?? props.member?.photo_url ?? null,
+);
+
+function choosePhoto(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+
+    if (!file) {
+        return;
+    }
+
+    photoError.value = null;
+
+    if (editing) {
+        router.post(
+            route('staff.photo.store', props.member!.id),
+            { photo: file },
+            {
+                forceFormData: true,
+                preserveScroll: true,
+                onStart: () => (uploading.value = true),
+                onFinish: () => {
+                    uploading.value = false;
+
+                    if (photoInput.value) {
+                        photoInput.value.value = '';
+                    }
+                },
+                onError: (errors) => (photoError.value = errors.photo ?? null),
+            },
+        );
+
+        return;
+    }
+
+    form.photo = file;
+    setPreview(URL.createObjectURL(file));
+}
+
+function removePhoto(): void {
+    if (editing) {
+        router.delete(route('staff.photo.destroy', props.member!.id), {
+            preserveScroll: true,
+        });
+
+        return;
+    }
+
+    form.photo = null;
+    setPreview(null);
+
+    if (photoInput.value) {
+        photoInput.value.value = '';
+    }
+}
+
+function setPreview(url: string | null): void {
+    if (preview.value) {
+        URL.revokeObjectURL(preview.value);
+    }
+
+    preview.value = url;
+}
+
+onBeforeUnmount(() => setPreview(null));
 
 const week = ref<Week>(
     props.member ? weekFromHours(props.member.hours) : PRESETS[0].week(),
@@ -103,7 +178,11 @@ function submit(): void {
             </div>
             <div class="space-y-5">
                 <div class="flex items-center gap-4">
-                    <MemberAvatar :name="form.name" size="lg" />
+                    <MemberAvatar
+                        :name="form.name"
+                        :photo="shownPhoto"
+                        size="lg"
+                    />
                     <div class="grid flex-1 gap-2">
                         <Label for="name">Name</Label>
                         <Input
@@ -116,6 +195,41 @@ function submit(): void {
                         />
                         <InputError :message="form.errors.name" />
                     </div>
+                </div>
+
+                <div class="grid gap-2" data-test="photo">
+                    <span class="text-sm font-medium">Photo</span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <label
+                            class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border bg-background px-3 text-sm font-medium shadow-xs transition-colors focus-within:ring-[3px] focus-within:ring-ring/50 hover:bg-accent"
+                        >
+                            <Spinner v-if="uploading" />
+                            <Camera v-else class="size-4" />
+                            {{ shownPhoto ? 'Change photo' : 'Add a photo' }}
+                            <input
+                                ref="photoInput"
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                class="sr-only"
+                                data-test="photo-input"
+                                @change="choosePhoto"
+                            />
+                        </label>
+                        <Button
+                            v-if="shownPhoto"
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            data-test="photo-remove"
+                            @click="removePhoto"
+                            >Remove</Button
+                        >
+                    </div>
+                    <p class="text-xs text-muted-foreground">
+                        A JPG, PNG or WebP up to 10 MB. It's cropped to a square
+                        from the middle.
+                    </p>
+                    <InputError :message="photoError ?? form.errors.photo" />
                 </div>
 
                 <div class="grid gap-2">

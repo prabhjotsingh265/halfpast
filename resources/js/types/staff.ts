@@ -11,6 +11,8 @@ export type StaffMember = {
     id: number;
     name: string;
     bio: string | null;
+    /** A square photo, or null to show initials. */
+    photo_url: string | null;
     is_active: boolean;
     service_ids: number[];
     hours: WorkingHours[];
@@ -28,5 +30,6 @@ export type ServiceOption = {
 export type StaffOption = {
     id: number;
     name: string;
+    photo_url?: string | null;
     is_active: boolean;
 };

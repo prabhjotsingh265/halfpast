@@ -108,6 +108,7 @@ class ServiceController extends Controller
             ->map(fn (Staff $member) => [
                 'id' => $member->id,
                 'name' => $member->name,
+                'photo_url' => $member->photoUrl(),
                 'is_active' => $member->is_active,
             ])
             ->all());

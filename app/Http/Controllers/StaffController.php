@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Staff\SaveStaffPhoto;
 use App\Actions\Staff\SaveWeeklyHours;
 use App\Http\Requests\StaffRequest;
 use App\Models\Service;
@@ -36,9 +37,9 @@ class StaffController extends Controller
         ]);
     }
 
-    public function store(StaffRequest $request): RedirectResponse
+    public function store(StaffRequest $request, SaveStaffPhoto $photos): RedirectResponse
     {
-        DB::transaction(function () use ($request) {
+        $member = DB::transaction(function () use ($request) {
             $member = Staff::create([
                 ...$request->staffAttributes(),
                 'position' => (int) Staff::max('position') + 1,
@@ -46,7 +47,13 @@ class StaffController extends Controller
 
             $member->services()->sync($request->serviceIds());
             $this->saveHours->handle($member, $request->hours());
+
+            return $member;
         });
+
+        if ($request->hasFile('photo')) {
+            $photos->handle($member, $request->file('photo'));
+        }
 
         return redirect()->route('staff.index');
     }
@@ -72,8 +79,9 @@ class StaffController extends Controller
         return redirect()->route('staff.index');
     }
 
-    public function destroy(Staff $staff): RedirectResponse
+    public function destroy(Staff $staff, SaveStaffPhoto $photos): RedirectResponse
     {
+        $photos->remove($staff);
         $staff->delete();
 
         return redirect()->route('staff.index');
@@ -88,6 +96,7 @@ class StaffController extends Controller
             'id' => $member->id,
             'name' => $member->name,
             'bio' => $member->bio,
+            'photo_url' => $member->photoUrl(),
             'is_active' => $member->is_active,
             'service_ids' => $member->services->pluck('id')->values(),
             'hours' => $member->workingHours->map(fn (WorkingHour $hour) => [

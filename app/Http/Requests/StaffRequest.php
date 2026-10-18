@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Actions\Staff\SaveStaffPhoto;
+use App\Http\Controllers\StaffPhotoController;
 use App\Models\WorkingHour;
 use App\Tenancy\CurrentBusiness;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -42,6 +44,7 @@ class StaffRequest extends FormRequest
                 'distinct',
                 Rule::exists('services', 'id')->where('business_id', app(CurrentBusiness::class)->id()),
             ],
+            'photo' => SaveStaffPhoto::RULES,
             'hours' => ['array', 'max:42'],
             'hours.*.weekday' => ['required', 'integer', 'between:1,7'],
             'hours.*.starts_at' => ['required', 'string', 'regex:'.self::START],
@@ -58,6 +61,7 @@ class StaffRequest extends FormRequest
             'hours.*.starts_at.regex' => 'Pick a start time on the five-minute mark.',
             'hours.*.ends_at.regex' => 'Pick an end time on the five-minute mark.',
             'service_ids.*.exists' => "One of those services isn't on your list any more.",
+            ...StaffPhotoController::messages(),
         ];
     }
 

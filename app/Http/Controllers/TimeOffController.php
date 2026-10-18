@@ -25,7 +25,7 @@ class TimeOffController extends Controller
         return Inertia::render('time-off/Index', [
             'entries' => $entries->map(fn (TimeOff $entry) => $this->present($entry, $zone))->values(),
             'staff' => Staff::orderBy('position')->orderBy('id')->get()
-                ->map(fn (Staff $member) => ['id' => $member->id, 'name' => $member->name, 'is_active' => $member->is_active])
+                ->map(fn (Staff $member) => ['id' => $member->id, 'name' => $member->name, 'photo_url' => $member->photoUrl(), 'is_active' => $member->is_active])
                 ->values(),
             'today' => now($zone)->toDateString(),
             'timezone' => $zone,
@@ -75,6 +75,7 @@ class TimeOffController extends Controller
             'id' => $entry->id,
             'staff_id' => $entry->staff_id,
             'staff_name' => $entry->staff?->name,
+            'staff_photo_url' => $entry->staff?->photoUrl(),
             'reason' => $entry->reason,
             'all_day' => $allDay,
             'starts_on' => $start->toDateString(),

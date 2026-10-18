@@ -66,6 +66,7 @@ class BookingPageController extends Controller
                 'id' => $member->id,
                 'name' => $member->name,
                 'bio' => $member->bio,
+                'photo_url' => $member->photoUrl(),
             ])->values(),
             'today' => $today,
             'lastDay' => $lastDay,

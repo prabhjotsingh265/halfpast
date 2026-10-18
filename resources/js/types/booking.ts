@@ -14,6 +14,7 @@ export type BookableStaff = {
     id: number;
     name: string;
     bio: string | null;
+    photo_url: string | null;
 };
 
 export type BookingSelection = {

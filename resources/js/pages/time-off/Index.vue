@@ -345,6 +345,7 @@ function entryWhen(entry: TimeOffEntry): string {
                         <MemberAvatar
                             v-if="entry.staff_name"
                             :name="entry.staff_name"
+                            :photo="entry.staff_photo_url"
                         />
                         <span
                             v-else

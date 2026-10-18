@@ -4,6 +4,7 @@ export type TimeOffEntry = {
     /** Null when the whole business is closed. */
     staff_id: number | null;
     staff_name: string | null;
+    staff_photo_url?: string | null;
     reason: string | null;
     all_day: boolean;
     /** "2026-12-24" */

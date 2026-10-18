@@ -9,6 +9,7 @@ use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -42,6 +43,12 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function isPlatformAdmin(): bool
     {
         return $this->is_admin && ! $this->is_demo;
+    }
+
+    /** @param  Builder<User>  $query */
+    public function scopePlatformAdmins(Builder $query): void
+    {
+        $query->where('is_admin', true)->where('is_demo', false);
     }
 
     /** Only platform admins get into /admin. */

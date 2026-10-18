@@ -4,7 +4,6 @@ namespace App\Actions\Booking;
 
 use App\Enums\BookingStatus;
 use App\Exceptions\TimeNotAvailable;
-use App\Jobs\StopUnfinishedCheckouts;
 use App\Models\Booking;
 use App\Models\Business;
 use App\Models\Service;
@@ -26,7 +25,7 @@ use Illuminate\Support\Facades\DB;
  */
 class HoldTime
 {
-    public function __construct(private FindBookableTimes $times) {}
+    public function __construct(private FindBookableTimes $times, private ClearLapsedHolds $clearLapsedHolds) {}
 
     public function handle(Business $business, Service $service, ?Staff $staff, CarbonImmutable $startsAt, ?CarbonImmutable $now = null): Booking
     {
@@ -58,29 +57,7 @@ class HoldTime
         $endsAt = $startsAt->addMinutes($service->duration_minutes);
         $blockedUntil = $endsAt->addMinutes($service->buffer_after_minutes);
 
-        $lapsed = Booking::where('business_id', $business->id)
-            ->where('staff_id', $staffId)
-            ->where('status', BookingStatus::Held)
-            ->where('hold_expires_at', '<=', $now);
-
-        // The lapsed holds this one is about to take the time of: their
-        // customers' unfinished checkouts are stopped once this commits.
-        $overlapping = (clone $lapsed)
-            ->where('starts_at', '<', $blockedUntil)
-            ->where('blocked_until', '>', $startsAt)
-            ->pluck('id')
-            ->map(fn ($id) => (int) $id)
-            ->values()
-            ->all();
-
-        // Lapsed holds still count for the overlap rule until they're marked
-        // expired, so clear this person's straight away rather than waiting
-        // for the scheduled clean-up.
-        $lapsed->update(['status' => BookingStatus::Expired]);
-
-        if ($overlapping !== []) {
-            StopUnfinishedCheckouts::dispatch(array_values($overlapping))->afterCommit();
-        }
+        $this->clearLapsedHolds->handle($business->id, $staffId, $startsAt, $blockedUntil, $now);
 
         $booking = new Booking([
             'service_id' => $service->id,

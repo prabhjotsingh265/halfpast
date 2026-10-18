@@ -30,9 +30,11 @@ class FindBookableTimes
     /**
      * @param  string  $from  First local date, "2026-11-02".
      * @param  string  $to  Last local date, included.
+     * @param  bool  $byBusiness  The business booking for someone: its own
+     *                            notice and how-far-ahead rules don't apply.
      * @return list<Slot>
      */
-    public function handle(Business $business, Service $service, ?Staff $only, string $from, string $to, ?CarbonImmutable $now = null): array
+    public function handle(Business $business, Service $service, ?Staff $only, string $from, string $to, ?CarbonImmutable $now = null, bool $byBusiness = false): array
     {
         $now ??= CarbonImmutable::now();
         $staff = $this->staffFor($business, $service, $only);
@@ -84,8 +86,8 @@ class FindBookableTimes
             $service->duration_minutes,
             $service->buffer_after_minutes,
             $business->slot_step_minutes,
-            $now->addMinutes($business->min_notice_minutes),
-            $now->addDays($business->booking_horizon_days),
+            $byBusiness ? $now : $now->addMinutes($business->min_notice_minutes),
+            $byBusiness ? $now->addYears(2) : $now->addDays($business->booking_horizon_days),
         );
 
         return $this->finder->find($request, $calendars, self::intervals($timeOff->whereNull('staff_id'), 'ends_at'));

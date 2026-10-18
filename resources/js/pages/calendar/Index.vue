@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ChevronLeft, ChevronRight } from '@lucide/vue';
+import { ChevronLeft, ChevronRight, Plus } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import BookingList from '@/components/calendar/BookingList.vue';
 import BookingSheet from '@/components/calendar/BookingSheet.vue';
 import DayGrid from '@/components/calendar/DayGrid.vue';
+import NewBookingSheet from '@/components/calendar/NewBookingSheet.vue';
 import WeekGrid from '@/components/calendar/WeekGrid.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,8 @@ import type {
     CalendarStaff,
     CalendarTimeOff,
     CalendarView,
+    NewBookingOptions,
+    NewBookingPreset,
 } from '@/types/calendar';
 
 const props = defineProps<{
@@ -30,6 +33,7 @@ const props = defineProps<{
     staff: CalendarStaff[];
     bookings: CalendarBooking[];
     timeOff: CalendarTimeOff[];
+    newBooking: NewBookingOptions;
 }>();
 
 defineOptions({
@@ -47,6 +51,35 @@ const views: { value: CalendarView; label: string }[] = [
 const loading = ref(false);
 const selected = ref<CalendarBooking | null>(null);
 const sheetOpen = ref(false);
+
+const canBook = computed(() => props.newBooking.staff.length > 0);
+const adding = ref(false);
+const preset = ref<NewBookingPreset>({
+    date: props.date,
+    staffId: null,
+    time: null,
+});
+
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/** Open the new-booking form, filled in from where it was asked for. */
+function add(
+    from: { date?: string; staffId?: number | null; minutes?: number } = {},
+): void {
+    if (!canBook.value) {
+        return;
+    }
+
+    preset.value = {
+        date: from.date ?? props.date,
+        staffId: from.staffId ?? props.person,
+        time:
+            from.minutes === undefined
+                ? null
+                : `${pad(Math.floor(from.minutes / 60))}:${pad(from.minutes % 60)}`,
+    };
+    adding.value = true;
+}
 
 function go(
     change: { date?: string; view?: CalendarView; staff?: number | null } = {},
@@ -185,6 +218,14 @@ const staffName = computed(() => {
             <div
                 class="flex w-full flex-wrap items-center gap-2 lg:ml-auto lg:w-auto"
             >
+                <Button
+                    v-if="canBook"
+                    class="h-9 rounded-full"
+                    data-test="new-booking-button"
+                    @click="add()"
+                >
+                    <Plus class="size-4" />New booking
+                </Button>
                 <div
                     class="inline-flex h-9 items-center rounded-full border p-0.5"
                     role="group"
@@ -271,6 +312,7 @@ const staffName = computed(() => {
                 :bookings="bookings"
                 :time-off="timeOff"
                 @open="open"
+                @pick="(staffId, minutes) => add({ staffId, minutes })"
             />
             <WeekGrid
                 v-else-if="view === 'week'"
@@ -283,6 +325,7 @@ const staffName = computed(() => {
                 :time-off="timeOff"
                 @open="open"
                 @day="(day) => go({ view: 'day', date: day })"
+                @pick="(day, minutes) => add({ date: day, minutes })"
             />
             <BookingList
                 v-else
@@ -301,6 +344,15 @@ const staffName = computed(() => {
             :booking="selected"
             :timezone="timezone"
             :staff-name="staffName"
+        />
+
+        <NewBookingSheet
+            v-if="canBook"
+            v-model:open="adding"
+            :options="newBooking"
+            :preset="preset"
+            :timezone="timezone"
+            :today="today"
         />
     </div>
 </template>

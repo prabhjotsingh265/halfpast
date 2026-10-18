@@ -5,6 +5,7 @@ use App\Http\Controllers\Business\BookingRulesController;
 use App\Http\Controllers\Business\PaymentMethodsController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\EarningsController;
+use App\Http\Controllers\NewBookingController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\StaffController;
@@ -23,6 +24,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('has-business')->group(function () {
         Route::inertia('dashboard', 'Dashboard')->name('dashboard');
         Route::get('calendar', [CalendarController::class, 'index'])->name('calendar');
+        Route::get('bookings/times', [NewBookingController::class, 'times'])->name('bookings.times');
+        Route::get('customers/search', [NewBookingController::class, 'customers'])->middleware('throttle:120,1')->name('customers.search');
+        Route::post('bookings', [NewBookingController::class, 'store'])->name('bookings.store');
         Route::post('bookings/{booking}/complete', [BookingActionsController::class, 'complete'])->name('bookings.complete');
         Route::post('bookings/{booking}/no-show', [BookingActionsController::class, 'noShow'])->name('bookings.no-show');
         Route::post('bookings/{booking}/cancel', [BookingActionsController::class, 'cancel'])->middleware('can:manage-business')->name('bookings.cancel');

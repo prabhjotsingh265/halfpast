@@ -46,3 +46,25 @@ export type CalendarTimeOff = {
     ends_at: string;
     reason: string | null;
 };
+
+/** What the new-booking form can offer this person. */
+export type NewBookingOptions = {
+    services: {
+        id: number;
+        name: string;
+        duration: number;
+        price: number;
+        staff_ids: number[];
+    }[];
+    /** Who they can book in: anyone for an owner, themselves for staff. */
+    staff: { id: number; name: string }[];
+    currency: string;
+};
+
+/** Where the form was opened from: a day, and maybe a column and a time. */
+export type NewBookingPreset = {
+    date: string;
+    staffId: number | null;
+    /** "14:30", in the business's time. */
+    time: string | null;
+};

@@ -26,7 +26,10 @@ const props = defineProps<{
     timeOff: CalendarTimeOff[];
 }>();
 
-const emit = defineEmits<{ open: [booking: CalendarBooking] }>();
+const emit = defineEmits<{
+    open: [booking: CalendarBooking];
+    pick: [staffId: number, minutes: number];
+}>();
 
 const scroller = ref<HTMLElement | null>(null);
 const now = useNow();
@@ -46,6 +49,18 @@ const { range, hourMarks, height, top, inRange } = useTimeScale(() => ({
         ...props.bookings.map((b) => at(b.blocked_until)),
     ],
 }));
+
+/** A click on empty space: that person, at the quarter hour clicked. */
+function pickAt(event: MouseEvent, staffId: number): void {
+    if ((event.target as HTMLElement).closest('button')) {
+        return;
+    }
+
+    const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const minutes = range.value[0] + (event.clientY - box.top) / PPM;
+
+    emit('pick', staffId, Math.floor(minutes / 15) * 15);
+}
 
 function bookingsFor(staffId: number): CalendarBooking[] {
     return props.bookings.filter((b) => b.staff_id === staffId);
@@ -129,6 +144,7 @@ onMounted(async () => {
                 class="relative border-l bg-[repeating-linear-gradient(135deg,transparent_0_7px,color-mix(in_oklch,var(--line)_70%,transparent)_7px_8px)]"
                 :style="{ height: `${height}px` }"
                 :data-test="`column-${member.id}`"
+                @click="pickAt($event, member.id)"
             >
                 <!-- Working hours are the clear parts. -->
                 <div

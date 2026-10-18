@@ -13,7 +13,7 @@ class SendBookingConfirmation
         $customer = $event->booking->loadMissing('customer')->customer;
 
         // Walk-ins booked by hand may have no email address.
-        if ($customer?->email === null) {
+        if (! $event->tellCustomer || $customer?->email === null) {
             return;
         }
 

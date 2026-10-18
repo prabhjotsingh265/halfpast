@@ -29,7 +29,20 @@ const props = defineProps<{
 const emit = defineEmits<{
     open: [booking: CalendarBooking];
     day: [date: string];
+    pick: [date: string, minutes: number];
 }>();
+
+/** A click on empty space: that day, at the quarter hour clicked. */
+function pickAt(event: MouseEvent, day: string): void {
+    if ((event.target as HTMLElement).closest('button')) {
+        return;
+    }
+
+    const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const minutes = range.value[0] + (event.clientY - box.top) / PPM;
+
+    emit('pick', day, Math.floor(minutes / 15) * 15);
+}
 
 const scroller = ref<HTMLElement | null>(null);
 const now = useNow();
@@ -234,6 +247,7 @@ onMounted(async () => {
                 class="relative border-l bg-[repeating-linear-gradient(135deg,transparent_0_7px,color-mix(in_oklch,var(--line)_70%,transparent)_7px_8px)]"
                 :style="{ height: `${height}px` }"
                 :data-test="`column-${day}`"
+                @click="pickAt($event, day)"
             >
                 <!-- Working hours are the clear parts. -->
                 <div

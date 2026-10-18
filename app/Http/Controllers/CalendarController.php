@@ -9,6 +9,7 @@ use App\Enums\BusinessRole;
 use App\Enums\PaymentStatus;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Models\Service;
 use App\Models\Staff;
 use App\Models\TimeOff;
 use App\Models\WorkingHour;
@@ -88,6 +89,14 @@ class CalendarController extends Controller
             ->orderBy('starts_at')
             ->get();
 
+        // For adding a booking by hand: what's on offer, and who this person
+        // can book in (anyone for an owner; staff, themselves).
+        $services = Service::where('is_active', true)
+            ->with(['staff' => fn ($query) => $query->where('staff.is_active', true)->select('staff.id')])
+            ->orderBy('position')
+            ->orderBy('id')
+            ->get();
+
         return Inertia::render('calendar/Index', [
             'view' => $view,
             'date' => $date,
@@ -95,9 +104,22 @@ class CalendarController extends Controller
             'today' => $today,
             'timezone' => $zone,
             'person' => $person?->id,
-            'team' => $team->push(...($person !== null && ! $team->contains($person) ? [$person] : []))
+            'team' => $team->concat($person !== null && ! $team->contains($person) ? [$person] : [])
                 ->map(fn (Staff $member) => ['id' => $member->id, 'name' => $member->name])
                 ->values(),
+            'newBooking' => [
+                'services' => $services->map(fn (Service $service) => [
+                    'id' => $service->id,
+                    'name' => $service->name,
+                    'duration' => $service->duration_minutes,
+                    'price' => $service->price,
+                    'staff_ids' => $service->staff->pluck('id')->values(),
+                ])->values(),
+                'staff' => ($owner ? $team : $team->whereIn('id', $mine))
+                    ->map(fn (Staff $member) => ['id' => $member->id, 'name' => $member->name])
+                    ->values(),
+                'currency' => $business->currency,
+            ],
             'staff' => $staff->map(fn (Staff $member) => [
                 'id' => $member->id,
                 'name' => $member->name,

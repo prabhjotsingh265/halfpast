@@ -38,6 +38,10 @@ Every password is `password`. With `DEMO_MODE=true`, they're rebuilt every night
 
 Open the calendar in two windows and add a booking in one: it appears in the other within a couple of seconds.
 
+### The platform admin
+
+`/admin` shows every business, booking and payment, the webhook log and failed jobs (which can be retried or cleared). Locally, log in as `admin@halfpast.test` / `password`. Anywhere else, let someone in with `php artisan admin:grant them@example.com` (and `--revoke` to undo). Admins sign in through the normal login, two-factor included.
+
 On Windows, run the commands from a WSL 2 terminal.
 
 ## Payments in test mode

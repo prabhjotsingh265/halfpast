@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\BusinessRole;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -19,6 +21,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string $name
  * @property string $email
  * @property bool $is_demo A one-click demo login, rebuilt every night.
+ * @property bool $is_admin Runs the platform: can open /admin.
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -30,10 +33,16 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
+
+    /** Only the people who run the platform get into /admin; never a shared demo login. */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->is_admin && ! $this->is_demo;
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -47,6 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'is_demo' => 'boolean',
+            'is_admin' => 'boolean',
         ];
     }
 

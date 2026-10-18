@@ -3,13 +3,11 @@
     "name": "prabhjotsingh265/halfpast",
     "type": "project",
     "description": "Booking pages for small businesses that can't double-book.",
-    "keywords": [
-        "laravel",
-        "framework"
-    ],
+    "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
         "php": "^8.4",
+        "filament/filament": "^4.15",
         "guzzlehttp/guzzle": "^7.15",
         "inertiajs/inertia-laravel": "^3.0",
         "laravel/fortify": "^1.37.2",
@@ -73,7 +71,8 @@
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
+            "@php artisan package:discover --ansi",
+            "@php artisan filament:upgrade"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"

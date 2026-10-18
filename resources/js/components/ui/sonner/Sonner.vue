@@ -1,12 +1,17 @@
 <script lang="ts" setup>
 import type { ToasterProps } from "vue-sonner"
 import { CircleCheckIcon, InfoIcon, Loader2Icon, OctagonXIcon, TriangleAlertIcon, XIcon } from "@lucide/vue"
+import { onMounted } from "vue"
 import { Toaster as Sonner } from "vue-sonner"
+import { markToasterReady } from "@/lib/flashToast"
 import { cn } from "@/lib/utils"
 
 import 'vue-sonner/style.css';
 
 const props = defineProps<ToasterProps>()
+
+// Toasts only show once this is on the page, so the flash toasts wait for it.
+onMounted(markToasterReady)
 </script>
 
 <template>

@@ -9,7 +9,7 @@ RUN := $(COMPOSE) exec app
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup up down restart build logs shell artisan composer npm migrate fresh test lint stripe-webhooks
+.PHONY: help setup up down restart build logs shell artisan composer npm migrate fresh demo test lint stripe-webhooks
 
 help: ## List the available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  make %-10s %s\n", $$1, $$2}'
@@ -61,6 +61,9 @@ migrate: ## Run new migrations
 
 fresh: ## Rebuild the database from scratch and seed it
 	$(RUN) php artisan migrate:fresh --seed
+
+demo: ## Rebuild the three demo businesses around today
+	$(RUN) php artisan demo:reset --force
 
 test: ## Run the test suite
 	$(RUN) php artisan test

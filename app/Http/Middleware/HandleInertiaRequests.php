@@ -45,6 +45,8 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'business' => fn () => $this->currentBusiness($request),
+            // When the demo businesses are rebuilt, in UTC; null outside demo mode.
+            'demoResetAt' => config('demo.enabled') ? (string) config('demo.reset_at') : null,
         ];
     }
 
@@ -70,6 +72,7 @@ class HandleInertiaRequests extends Middleware
             'slug' => $business->slug,
             'timezone' => $business->timezone,
             'currency' => $business->currency,
+            'is_demo' => $business->is_demo,
             'role' => $user instanceof User ? $user->roleIn($business)?->value : null,
         ];
     }

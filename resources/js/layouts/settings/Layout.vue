@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -23,6 +23,8 @@ const sidebarNavItems: NavItem[] = [
 ];
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
+
+const isDemo = usePage().props.auth.user?.is_demo === true;
 </script>
 
 <template>
@@ -31,6 +33,15 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
             title="Settings"
             description="Manage your profile and account settings"
         />
+
+        <p
+            v-if="isDemo"
+            class="mb-6 max-w-2xl rounded-xl border border-dashed px-4 py-3 text-sm text-muted-foreground"
+            data-test="demo-settings-notice"
+        >
+            This is a shared demo login, so its name, email, password and
+            two-factor settings can't be changed. Appearance still can.
+        </p>
 
         <div class="flex flex-col lg:flex-row lg:space-x-12">
             <aside class="w-full max-w-xl lg:w-48">

@@ -51,6 +51,13 @@ class StripeGateway implements PaymentGateway
         return filled(config('payments.gateways.stripe.secret'));
     }
 
+    public function isTestMode(): bool
+    {
+        $secret = (string) config('payments.gateways.stripe.secret');
+
+        return str_starts_with($secret, 'sk_test_') || str_starts_with($secret, 'rk_test_');
+    }
+
     public function supports(string $currency): bool
     {
         return in_array(strtoupper($currency), (array) config('payments.gateways.stripe.currencies'), true);

@@ -7,6 +7,7 @@ use App\Actions\Booking\RecordVisit;
 use App\Enums\BookingStatus;
 use App\Mail\Money;
 use App\Models\Booking;
+use App\Models\Business;
 use App\Support\Calendar\BookingHistory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -45,7 +46,10 @@ class BookingActionsController extends Controller
             'tell_customer' => ['required', 'boolean'],
         ]);
 
-        if (! $cancel->handle($booking, 'business', refund: (bool) $choice['refund'], tellCustomer: (bool) $choice['tell_customer'])) {
+        // Demo businesses never email: anyone can try them, with any address.
+        $tellCustomer = (bool) $choice['tell_customer'] && ! Business::whereKey($booking->business_id)->value('is_demo');
+
+        if (! $cancel->handle($booking, 'business', refund: (bool) $choice['refund'], tellCustomer: $tellCustomer)) {
             Inertia::flash('toast', ['type' => 'error', 'message' => "This booking can't be cancelled now. It may have started or been cancelled already."]);
 
             return back();

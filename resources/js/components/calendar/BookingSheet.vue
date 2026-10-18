@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import {
     CalendarClock,
     Check,
@@ -33,6 +33,9 @@ const props = defineProps<{
     timezone: string;
     staffName: string | null;
 }>();
+
+// Demo businesses never email: anyone can try them, with any address.
+const isDemo = usePage().props.business?.is_demo === true;
 
 const open = defineModel<boolean>('open', { required: true });
 
@@ -408,8 +411,14 @@ function cancel(): void {
                                     Keep the deposit
                                 </label>
                             </fieldset>
+                            <p
+                                v-if="booking.customer?.email && isDemo"
+                                class="text-sm text-muted-foreground"
+                            >
+                                Demo businesses don't send emails.
+                            </p>
                             <label
-                                v-if="booking.customer?.email"
+                                v-else-if="booking.customer?.email"
                                 class="flex items-center gap-2 text-sm"
                             >
                                 <Checkbox

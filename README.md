@@ -14,17 +14,29 @@ cd halfpast
 make setup
 ```
 
-`make setup` builds the image, installs the PHP and JavaScript dependencies, creates `.env`, runs the migrations and adds a demo salon. When it finishes:
+`make setup` builds the image, installs the PHP and JavaScript dependencies, creates `.env`, runs the migrations and adds three demo businesses. When it finishes:
 
 | Address                                   | What's there                                    |
 | ----------------------------------------- | ----------------------------------------------- |
 | http://localhost:8000                     | The app                                         |
-| http://localhost:8000/kesar-beauty-lounge | The demo salon's booking page                   |
+| http://localhost:8000/kesar-beauty-lounge | A demo salon's booking page                     |
 | http://localhost:5173                     | Vite dev server (hot reload)                    |
 | http://localhost:8025                     | Mailpit, which catches every email sent locally |
 | ws://localhost:8080                       | Reverb, which sends live calendar updates       |
 
-Log in as `demo@halfpast.test` with the password `password` to see the salon from the owner's side. `make fresh` resets it. Open the calendar in two windows and add a booking in one: it appears in the other within a couple of seconds.
+### The demo
+
+The login page has one-click logins into three demo businesses, each with a few weeks of bookings, payments and customers around today:
+
+| Business            | Where, in         | Booking page           | Logins                                                      |
+| ------------------- | ----------------- | ---------------------- | ----------------------------------------------------------- |
+| Kesar Beauty Lounge | Kolkata, rupees   | `/kesar-beauty-lounge` | `demo@halfpast.test` (owner), `staff@halfpast.test` (staff) |
+| Fade & Co. Barbers  | London, pounds    | `/fade-and-co`         | `barber@halfpast.test` (owner)                              |
+| Stillwater Physio   | New York, dollars | `/stillwater-physio`   | `clinic@halfpast.test` (owner)                              |
+
+Every password is `password`. With `DEMO_MODE=true`, they're rebuilt every night at 03:00 UTC; `make demo` does it now. Demo logins can't change how they sign in, demo businesses don't send emails the business would send, and their deposits go through the built-in test gateway.
+
+Open the calendar in two windows and add a booking in one: it appears in the other within a couple of seconds.
 
 On Windows, run the commands from a WSL 2 terminal.
 

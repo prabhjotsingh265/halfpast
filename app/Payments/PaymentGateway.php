@@ -23,6 +23,9 @@ interface PaymentGateway
     /** Whether its keys are set, so it can be offered at all. */
     public function isConfigured(): bool;
 
+    /** Whether it's using test keys, so no real money moves. */
+    public function isTestMode(): bool;
+
     public function supports(string $currency): bool;
 
     /**

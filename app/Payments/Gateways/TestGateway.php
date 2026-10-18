@@ -41,6 +41,11 @@ class TestGateway implements PaymentGateway
         return (bool) config('payments.gateways.test.enabled') && ! app()->isProduction();
     }
 
+    public function isTestMode(): bool
+    {
+        return true;
+    }
+
     public function supports(string $currency): bool
     {
         return true;

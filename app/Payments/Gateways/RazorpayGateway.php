@@ -45,6 +45,11 @@ class RazorpayGateway implements PaymentGateway
         return filled(config('payments.gateways.razorpay.key_id')) && filled(config('payments.gateways.razorpay.key_secret'));
     }
 
+    public function isTestMode(): bool
+    {
+        return str_starts_with((string) config('payments.gateways.razorpay.key_id'), 'rzp_test_');
+    }
+
     public function supports(string $currency): bool
     {
         return in_array(strtoupper($currency), (array) config('payments.gateways.razorpay.currencies'), true);

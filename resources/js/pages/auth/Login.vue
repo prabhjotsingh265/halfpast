@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import TextLink from '@/components/TextLink.vue';
@@ -16,10 +17,33 @@ defineOptions({
     },
 });
 
-defineProps<{
-    status?: string;
-    canResetPassword: boolean;
-}>();
+withDefaults(
+    defineProps<{
+        status?: string;
+        canResetPassword: boolean;
+        /** One-click logins into the demo businesses, while demo mode is on. */
+        demos?: {
+            slug: string;
+            name: string;
+            summary: string;
+            logins: { as: 'owner' | 'staff'; label: string }[];
+        }[];
+    }>(),
+    { demos: () => [] },
+);
+
+const entering = ref<string | null>(null);
+
+function enterDemo(slug: string, as: string): void {
+    router.post(
+        route('demo.login', { slug }),
+        { as },
+        {
+            onStart: () => (entering.value = `${slug}:${as}`),
+            onFinish: () => (entering.value = null),
+        },
+    );
+}
 </script>
 
 <template>
@@ -102,4 +126,45 @@ defineProps<{
             <TextLink :href="route('register')" :tabindex="5">Sign up</TextLink>
         </div>
     </Form>
+
+    <section
+        v-if="demos.length > 0"
+        class="mt-8 border-t pt-6"
+        aria-labelledby="demo-heading"
+        data-test="demo-logins"
+    >
+        <h2 id="demo-heading" class="text-center text-sm font-semibold">
+            Or look around a demo
+        </h2>
+        <p class="mt-1 text-center text-xs text-muted-foreground">
+            No sign-up. Change anything you like: it resets every night.
+        </p>
+        <ul class="mt-4 space-y-2">
+            <li
+                v-for="demo in demos"
+                :key="demo.slug"
+                class="rounded-xl border p-3"
+            >
+                <p class="text-sm font-medium">{{ demo.name }}</p>
+                <p class="text-xs text-muted-foreground">{{ demo.summary }}</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <Button
+                        v-for="login in demo.logins"
+                        :key="login.as"
+                        type="button"
+                        size="sm"
+                        :variant="login.as === 'owner' ? 'default' : 'outline'"
+                        :disabled="entering !== null"
+                        :data-test="`demo-${demo.slug}-${login.as}`"
+                        @click="enterDemo(demo.slug, login.as)"
+                    >
+                        <Spinner
+                            v-if="entering === `${demo.slug}:${login.as}`"
+                        />
+                        As {{ login.label }}
+                    </Button>
+                </div>
+            </li>
+        </ul>
+    </section>
 </template>

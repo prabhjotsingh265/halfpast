@@ -31,7 +31,7 @@ import type {
 const props = defineProps<{
     booking: CheckoutBooking;
     customer: CheckoutCustomer | null;
-    gateways: { key: string; label: string }[];
+    gateways: { key: string; label: string; test_mode: boolean }[];
     upcoming: { key: string; label: string }[];
     widget: RazorpayWidget | null;
     payment: CheckoutPayment | null;
@@ -41,6 +41,17 @@ const props = defineProps<{
     paymentWindow: number;
     serverNow: string;
 }>();
+
+// What to type on each gateway's page when it's using test keys.
+const testHint: Record<string, string> = {
+    stripe: 'Card: 4242 4242 4242 4242, any future date, any CVC.',
+    razorpay: 'Razorpay: Netbanking, any bank, then Success.',
+    test: 'Test payment: press Pay on the next page.',
+};
+
+const testGateways = computed(() =>
+    props.gateways.filter((gateway) => gateway.test_mode),
+);
 
 const business = computed(() => usePage().props.business!);
 
@@ -417,6 +428,23 @@ const againUrl = computed(() =>
                             confirmed. Starting a payment gives you a fresh
                             {{ paymentWindow }} minutes.
                         </p>
+                        <div
+                            v-if="testGateways.length > 0"
+                            class="rounded-xl border border-dashed border-sun-deep/50 bg-sun/10 px-3 py-2.5 text-sm"
+                            data-test="test-mode"
+                        >
+                            <p class="font-semibold">
+                                Test mode: no real money is taken.
+                            </p>
+                            <ul class="mt-1 space-y-0.5 text-muted-foreground">
+                                <li
+                                    v-for="gateway in testGateways"
+                                    :key="gateway.key"
+                                >
+                                    {{ testHint[gateway.key] ?? gateway.label }}
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     <div
                         v-if="upcoming.length > 0"

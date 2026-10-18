@@ -7,6 +7,7 @@ use App\Http\Controllers\CalendarBlockController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DemoLoginController;
 use App\Http\Controllers\EarningsController;
 use App\Http\Controllers\NewBookingController;
 use App\Http\Controllers\OnboardingController;
@@ -17,6 +18,9 @@ use App\Http\Controllers\TimeOffController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'marketing/Home')->name('home');
+
+// One click into a demo business, while demo mode is on.
+Route::post('demo/{slug}/login', DemoLoginController::class)->middleware('throttle:30,1')->name('demo.login');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('start', [OnboardingController::class, 'create'])->name('onboarding.create');

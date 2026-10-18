@@ -33,6 +33,7 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             business: CurrentBusiness | null;
+            demoResetAt: string | null;
             [key: string]: unknown;
         };
     }

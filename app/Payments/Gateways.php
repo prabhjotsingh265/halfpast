@@ -69,8 +69,16 @@ class Gateways
      */
     public function for(Business $business): array
     {
+        $available = $this->configured();
+
+        // Demo businesses can always take test payments, even in production,
+        // so visitors can try paying without a real card.
+        if ($business->is_demo && config('demo.enabled')) {
+            $available['test'] = $this->get('test');
+        }
+
         return array_filter(
-            $this->configured(),
+            $available,
             fn (PaymentGateway $gateway) => in_array($gateway->key(), $business->payment_gateways, true)
                 && $gateway->supports($business->currency),
         );

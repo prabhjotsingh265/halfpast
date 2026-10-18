@@ -16,13 +16,15 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * The test gateway's own payment page, standing in for Stripe's or PayPal's.
- * Only exists outside production.
+ * Exists outside production, and wherever demo mode is on.
  */
 class TestGatewayController extends Controller
 {
     public function __construct(private TestGateway $gateway)
     {
-        abort_unless($gateway->isConfigured(), 404);
+        // Also open while demo mode is on: demo businesses take test payments
+        // even in production, and only they can start one there.
+        abort_unless($gateway->isConfigured() || config('demo.enabled'), 404);
     }
 
     public function show(string $order): Response

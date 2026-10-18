@@ -99,7 +99,8 @@ class NewBookingController extends Controller
                 $request->validated('phone'),
             ),
             $request->validated('notes'),
-            $request->boolean('tell_customer', true),
+            // Demo businesses never email: anyone can try them, with any address.
+            $request->boolean('tell_customer', true) && ! $business->is_demo,
         ));
 
         $when = $booking->starts_at->setTimezone($business->timezone);

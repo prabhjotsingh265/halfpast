@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $name
  * @property string $slug
+ * @property bool $is_demo One of the demo businesses, rebuilt every night.
  * @property string $timezone
  * @property string $currency
  * @property string|null $country
@@ -109,6 +110,7 @@ class Business extends Model
     {
         return [
             'payment_gateways' => 'array',
+            'is_demo' => 'boolean',
         ];
     }
 

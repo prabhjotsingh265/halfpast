@@ -35,6 +35,11 @@ class PayPalGateway implements PaymentGateway
         return false;
     }
 
+    public function isTestMode(): bool
+    {
+        return true;
+    }
+
     public function supports(string $currency): bool
     {
         return in_array(strtoupper($currency), (array) config('payments.gateways.paypal.currencies'), true);

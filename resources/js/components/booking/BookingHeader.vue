@@ -31,6 +31,14 @@ const tint = computed(() => {
 </script>
 
 <template>
+    <p
+        v-if="business.is_demo"
+        class="bg-foreground px-4 py-2 text-center text-xs text-background"
+        data-test="demo-notice"
+    >
+        A demo business. Book anything you like: it's pretend, nothing is
+        charged, and it all resets every night.
+    </p>
     <header
         class="relative overflow-clip border-b bg-[linear-gradient(120deg,var(--from),var(--to))] dark:bg-[linear-gradient(120deg,var(--from-dark),var(--to-dark))]"
         :style="tint"

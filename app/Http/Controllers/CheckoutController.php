@@ -66,7 +66,7 @@ class CheckoutController extends Controller
                 'notes' => $booking->notes,
             ],
             'gateways' => array_values(array_map(
-                fn (PaymentGateway $gateway) => ['key' => $gateway->key(), 'label' => $gateway->label()],
+                fn (PaymentGateway $gateway) => ['key' => $gateway->key(), 'label' => $gateway->label(), 'test_mode' => $gateway->isTestMode()],
                 $this->gateways->for($business),
             )),
             // Planned but not set up yet, shown as "coming soon".

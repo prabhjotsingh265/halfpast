@@ -115,4 +115,18 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Addresses that can never receive mail
+    |--------------------------------------------------------------------------
+    |
+    | example.com, .test and the like are reserved and can't take mail, and
+    | the demo customers all use them. A real mail provider would only bounce
+    | those messages, so in production they're dropped before sending. Locally
+    | they still go to Mailpit, to be looked at.
+    |
+    */
+
+    'skip_reserved_domains' => (bool) env('MAIL_SKIP_RESERVED_DOMAINS', env('APP_ENV') === 'production'),
+
 ];

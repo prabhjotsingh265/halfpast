@@ -5,5 +5,7 @@ export type CurrentBusiness = {
     slug: string;
     timezone: string;
     currency: string;
+    /** A demo business, rebuilt every night. */
+    is_demo: boolean;
     role: 'owner' | 'staff' | null;
 };

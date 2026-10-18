@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { TriangleAlert, X } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
@@ -23,6 +23,9 @@ const props = defineProps<{
     timezone: string;
     today: string;
 }>();
+
+// Demo businesses never email: anyone can try them, with any address.
+const isDemo = usePage().props.business?.is_demo === true;
 
 const emit = defineEmits<{ done: [] }>();
 
@@ -504,7 +507,10 @@ const dayLabel = computed(() =>
             </template>
             <InputError :message="form.errors.customer_id" />
 
-            <label v-if="emailTo" class="flex items-center gap-2 text-sm">
+            <p v-if="emailTo && isDemo" class="text-sm text-muted-foreground">
+                Demo businesses don't send emails.
+            </p>
+            <label v-else-if="emailTo" class="flex items-center gap-2 text-sm">
                 <Checkbox v-model="form.tell_customer" data-test="nb-tell" />
                 Email {{ firstName }} a confirmation
             </label>

@@ -18,6 +18,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property int $id
  * @property string $name
  * @property string $email
+ * @property bool $is_demo A one-click demo login, rebuilt every night.
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -45,6 +46,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'is_demo' => 'boolean',
         ];
     }
 

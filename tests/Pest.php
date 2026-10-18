@@ -20,8 +20,10 @@ pest()->extend(TestCase::class)
     ->in('Feature');
 
 // These run several processes against the database at once, so their data
-// has to be committed instead of rolled back, and the tables are emptied
-// before each test instead.
+// has to be committed instead of rolled back. The tables are emptied before
+// each test, and after it too: otherwise what it committed would still be
+// there for whichever feature test runs next.
 pest()->extend(TestCase::class)
     ->use(DatabaseTruncation::class)
+    ->afterEach(fn () => $this->truncateDatabaseTables())
     ->in('Concurrency');

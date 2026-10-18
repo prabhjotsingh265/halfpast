@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import {
+    CalendarDays,
     CalendarOff,
     LayoutGrid,
     SlidersHorizontal,
@@ -30,6 +31,11 @@ const mainNavItems = computed<NavItem[]>(() => [
         title: 'Dashboard',
         href: route('dashboard'),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Calendar',
+        href: route('calendar'),
+        icon: CalendarDays,
     },
     // Setting up what's sold and who works there is for owners.
     ...(page.props.business?.role === 'owner'

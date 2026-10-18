@@ -55,3 +55,30 @@ export function dayPart(hour: number): DayPart {
 
     return hour < 17 ? 'Afternoon' : 'Evening';
 }
+
+/**
+ * Minutes since midnight on `date`, as the clock reads in `zone`. Moments
+ * before that day give 0 and after it 1440, so blocks clip to the day.
+ */
+export function minutesOnDay(
+    instant: string,
+    date: string,
+    zone: string,
+): number {
+    const day = new Intl.DateTimeFormat('en-CA', {
+        timeZone: zone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).format(new Date(instant));
+
+    if (day < date) {
+        return 0;
+    }
+
+    if (day > date) {
+        return 24 * 60;
+    }
+
+    return Math.round(hourIn(instant, zone) * 60);
+}

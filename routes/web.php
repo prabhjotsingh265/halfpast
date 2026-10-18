@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Business\BookingRulesController;
 use App\Http\Controllers\Business\PaymentMethodsController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\EarningsController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ServiceController;
@@ -20,6 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('has-business')->group(function () {
         Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+        Route::get('calendar', [CalendarController::class, 'index'])->name('calendar');
 
         // Only owners set up what the business sells and who works there.
         Route::middleware('can:manage-business')->group(function () {

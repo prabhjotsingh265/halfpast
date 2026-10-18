@@ -23,9 +23,9 @@ import {
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { timeIn, zoneCity } from '@/lib/booking';
+import { displayLocale, visitorZone } from '@/lib/hydration';
 import { formatMoney } from '@/lib/money';
 import { duration } from '@/lib/time';
-import { localZone } from '@/lib/zones';
 import type { CancellationOffer, ManagedBooking } from '@/types/booking';
 
 const props = defineProps<{
@@ -35,15 +35,15 @@ const props = defineProps<{
 
 const business = computed(() => usePage().props.business!);
 
-const zone = localZone();
-const sameZone = zone === business.value.timezone;
+const zone = computed(() => visitorZone(business.value.timezone));
+const sameZone = computed(() => zone.value === business.value.timezone);
 
 const date = computed(() =>
-    new Intl.DateTimeFormat(undefined, {
+    new Intl.DateTimeFormat(displayLocale(), {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
-        timeZone: zone,
+        timeZone: zone.value,
     }).format(new Date(props.booking.starts_at)),
 );
 const length = computed(
@@ -59,13 +59,13 @@ const cancelling = ref(false);
 
 const freeUntil = computed(() =>
     props.cancellation
-        ? new Intl.DateTimeFormat(undefined, {
+        ? new Intl.DateTimeFormat(displayLocale(), {
               weekday: 'short',
               day: 'numeric',
               month: 'short',
               hour: 'numeric',
               minute: '2-digit',
-              timeZone: zone,
+              timeZone: zone.value,
           }).format(new Date(props.cancellation.free_until))
         : '',
 );

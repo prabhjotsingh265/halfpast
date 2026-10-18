@@ -1,5 +1,5 @@
 import type { Directive } from 'vue';
-import type { route as ziggyRoute } from 'ziggy-js';
+import type { Config, route as ziggyRoute } from 'ziggy-js';
 import type { Auth } from '@/types/auth';
 import type { CurrentBusiness } from '@/types/business';
 
@@ -20,10 +20,11 @@ declare module 'vite/client' {
     }
 }
 
-// `route()` comes from the @routes Blade directive in the browser, and from
-// the ZiggyVue plugin inside templates.
+// `route()` comes from the @routes Blade directive in the browser, from
+// ssr.ts on the server, and from the ZiggyVue plugin inside templates.
 declare global {
-    const route: typeof ziggyRoute;
+    var route: typeof ziggyRoute;
+    var Ziggy: Config | undefined;
 }
 
 declare module '@inertiajs/core' {

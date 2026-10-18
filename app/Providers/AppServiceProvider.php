@@ -5,14 +5,17 @@ namespace App\Providers;
 use App\Enums\BusinessRole;
 use App\Http\Middleware\SetCurrentBusiness;
 use App\Models\User;
+use App\Support\ServerRendering;
 use App\Tenancy\CurrentBusiness;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
 use Laravel\Pulse\Facades\Pulse;
 use Livewire\Livewire;
 
@@ -46,6 +49,8 @@ class AppServiceProvider extends ServiceProvider
         // email address leaves the site.
         Gate::define('viewPulse', fn (?User $user = null) => (bool) $user?->isPlatformAdmin());
         Pulse::user(fn (User $user) => ['name' => $user->name, 'extra' => $user->email, 'avatar' => null]);
+
+        Inertia::disableSsr(fn (Request $request) => ! ServerRendering::appliesTo($request));
 
         Gate::define('manage-business', function (User $user): bool {
             $business = app(CurrentBusiness::class)->get();

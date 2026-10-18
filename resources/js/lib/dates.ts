@@ -1,3 +1,5 @@
+import { displayLocale } from '@/lib/hydration';
+
 /**
  * Calendar dates as "YYYY-MM-DD" strings. The maths runs on UTC midnights,
  * so the browser's own time zone (and its clock changes) can never move a
@@ -78,7 +80,7 @@ export function formatDate(
         month: 'short',
     },
 ): string {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(displayLocale(), {
         ...options,
         timeZone: 'UTC',
     }).format(toDate(date));

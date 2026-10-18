@@ -16,11 +16,26 @@ return [
     */
 
     'ssr' => [
-        // Off for now: pages call Ziggy's route() as they load, and that only
-        // exists in the browser, so every server render failed and fell back.
-        'enabled' => (bool) env('INERTIA_SSR_ENABLED', false),
-        'url' => 'http://127.0.0.1:13714',
-        // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
+
+        // Only for the public pages: see App\Support\ServerRendering.
+        'enabled' => (bool) env('INERTIA_SSR_ENABLED', true),
+
+        'runtime' => env('INERTIA_SSR_RUNTIME', 'node'),
+
+        'ensure_runtime_exists' => (bool) env('INERTIA_SSR_ENSURE_RUNTIME_EXISTS', false),
+
+        'url' => env('INERTIA_SSR_URL', 'http://127.0.0.1:13714'),
+
+        // In development Vite renders the pages itself. Inside Docker, the app
+        // reaches it at http://vite:5173, not the localhost the browser uses.
+        'hot_url' => env('INERTIA_SSR_HOT_URL'),
+
+        'timeout' => env('INERTIA_SSR_TIMEOUT', 3),
+
+        'ensure_bundle_exists' => (bool) env('INERTIA_SSR_ENSURE_BUNDLE_EXISTS', true),
+
+        // A failed render falls back to the browser rendering the page.
+        'throw_on_error' => (bool) env('INERTIA_SSR_THROW_ON_ERROR', false),
 
     ],
 

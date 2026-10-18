@@ -3,9 +3,11 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Support\ServerRendering;
 use App\Tenancy\CurrentBusiness;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -47,6 +49,9 @@ class HandleInertiaRequests extends Middleware
             'business' => fn () => $this->currentBusiness($request),
             // When the demo businesses are rebuilt, in UTC; null outside demo mode.
             'demoResetAt' => config('demo.enabled') ? (string) config('demo.reset_at') : null,
+            // The route list, for route() while the server renders the page.
+            // The browser has it from the @routes tag, so other pages skip it.
+            ...(ServerRendering::appliesTo($request) ? ['ziggy' => fn () => (new Ziggy)->toArray()] : []),
         ];
     }
 

@@ -2,13 +2,12 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { Globe } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { timeIn, zoneCity } from '@/lib/booking';
+import { hourIn, timeIn, zoneCity } from '@/lib/booking';
 import { daylightRange } from '@/lib/daylight';
-import { hourNow } from '@/lib/time';
 
 /**
  * The top of a business's booking pages: its initial and name over the
- * colour of the hour, with a live clock for where the business is.
+ * colour of the hour where the business is, beside a live clock for there.
  */
 withDefaults(defineProps<{ compact?: boolean }>(), { compact: false });
 
@@ -24,7 +23,7 @@ onMounted(() => {
 onBeforeUnmount(() => window.clearInterval(timer));
 
 const tint = computed(() => {
-    const hour = hourNow(now.value);
+    const hour = hourIn(now.value, business.value.timezone);
 
     return daylightRange(hour, hour + 4);
 });

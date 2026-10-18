@@ -1,3 +1,5 @@
+import { displayLocale } from '@/lib/hydration';
+
 /**
  * Helpers for showing bookable times. Times arrive as UTC instants and are
  * shown in whichever zone the customer picks: their own, or the business's.
@@ -6,15 +8,17 @@
 const timeFormats = new Map<string, Intl.DateTimeFormat>();
 
 function timeFormat(zone: string): Intl.DateTimeFormat {
-    let format = timeFormats.get(zone);
+    const locale = displayLocale();
+    const key = `${locale ?? ''}|${zone}`;
+    let format = timeFormats.get(key);
 
     if (!format) {
-        format = new Intl.DateTimeFormat(undefined, {
+        format = new Intl.DateTimeFormat(locale, {
             hour: 'numeric',
             minute: '2-digit',
             timeZone: zone,
         });
-        timeFormats.set(zone, format);
+        timeFormats.set(key, format);
     }
 
     return format;

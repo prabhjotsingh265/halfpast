@@ -12,9 +12,9 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { timeIn, zoneCity } from '@/lib/booking';
 import { formatDate } from '@/lib/dates';
+import { visitorZone } from '@/lib/hydration';
 import { formatMoney } from '@/lib/money';
 import { duration } from '@/lib/time';
-import { localZone } from '@/lib/zones';
 import type {
     BookableService,
     BookableStaff,
@@ -54,13 +54,13 @@ const person = computed(
 );
 
 // Times in the customer's own zone, or the business's if they'd rather.
-const visitorZone = localZone();
-const sameZone = computed(() => visitorZone === business.value.timezone);
+const customerZone = computed(() => visitorZone(business.value.timezone));
+const sameZone = computed(() => customerZone.value === business.value.timezone);
 const useBusinessZone = ref(false);
 const zone = computed(() =>
     useBusinessZone.value || sameZone.value
         ? business.value.timezone
-        : visitorZone,
+        : customerZone.value,
 );
 
 const picked = computed(
@@ -341,7 +341,7 @@ watch(
                                 "
                                 @click="useBusinessZone = false"
                             >
-                                Your time ({{ zoneCity(visitorZone) }})
+                                Your time ({{ zoneCity(customerZone) }})
                             </button>
                             <button
                                 type="button"
@@ -473,7 +473,7 @@ watch(
                     <p class="mt-4 text-xs text-muted-foreground">
                         Times are
                         {{
-                            zone === visitorZone && !sameZone
+                            zone === customerZone && !sameZone
                                 ? 'in your time zone'
                                 : `${zoneCity(business.timezone)} time`
                         }}.

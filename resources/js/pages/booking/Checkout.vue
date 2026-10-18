@@ -17,11 +17,11 @@ import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { timeIn, zoneCity } from '@/lib/booking';
+import { displayLocale, visitorZone } from '@/lib/hydration';
 import { formatMoney } from '@/lib/money';
 import { countdown, duration } from '@/lib/time';
 import type { RazorpayWidget } from '@/lib/razorpay';
 import { openRazorpay } from '@/lib/razorpay';
-import { localZone } from '@/lib/zones';
 import type {
     CheckoutBooking,
     CheckoutCustomer,
@@ -203,13 +203,13 @@ const progress = computed(() => secondsLeft.value / (props.holdMinutes * 60));
 // Screen readers hear the time left once a minute, not every second.
 const minutesLeft = computed(() => Math.ceil(secondsLeft.value / 60));
 
-const zone = localZone();
+const zone = computed(() => visitorZone(business.value.timezone));
 const date = computed(() =>
-    new Intl.DateTimeFormat(undefined, {
+    new Intl.DateTimeFormat(displayLocale(), {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
-        timeZone: zone,
+        timeZone: zone.value,
     }).format(new Date(props.booking.starts_at)),
 );
 const length = computed(

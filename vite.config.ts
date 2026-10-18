@@ -10,7 +10,7 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
             refresh: true,
         }),
-        inertia(),
+        inertia({ ssr: 'resources/js/ssr.ts' }),
         tailwindcss(),
         vue({
             template: {
@@ -30,6 +30,8 @@ export default defineConfig({
         hmr: {
             host: 'localhost',
         },
+        // The app container asks Vite to render public pages at http://vite:5173.
+        allowedHosts: ['vite'],
         watch: {
             ignored: ['**/vendor/**'],
         },

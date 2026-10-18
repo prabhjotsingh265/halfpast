@@ -42,7 +42,7 @@ Open the calendar in two windows and add a booking in one: it appears in the oth
 
 `/admin` shows every business, booking and payment, the webhook log and failed jobs (which can be retried or cleared). Locally, log in as `admin@halfpast.test` / `password`. Anywhere else, let someone in with `php artisan admin:grant them@example.com` (and `--revoke` to undo). Admins sign in through the normal login, two-factor included.
 
-The queue runs on [Horizon](https://laravel.com/docs/horizon); its dashboard is at `/horizon`, for admins only. If a job fails for good, the admins get an email (once an hour at most for each kind of job). After deploying new code, run `php artisan horizon:terminate` inside the `queue` container (`docker compose exec queue php artisan horizon:terminate`); Docker starts it again on the new code.
+The queue runs on [Horizon](https://laravel.com/docs/horizon); its dashboard is at `/horizon`, for admins only. [Pulse](https://laravel.com/docs/pulse) at `/pulse` (admins only) shows slow requests (over 500 ms), slow queries (over 100 ms), exceptions, slow jobs and who's busiest, for the last 7 days. If a job fails for good, the admins get an email (once an hour at most for each kind of job). After deploying new code, run `php artisan horizon:terminate` inside the `queue` container (`docker compose exec queue php artisan horizon:terminate`); Docker starts it again on the new code.
 
 On Windows, run the commands from a WSL 2 terminal.
 

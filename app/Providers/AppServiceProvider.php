@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Pulse\Facades\Pulse;
 use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
@@ -33,12 +34,18 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
-        // Livewire only drives the platform admin, which looks across every
-        // business. Without this, its updates would pick up the business
-        // remembered in the session and quietly show only that one's records.
+        // Livewire only drives the platform admin and Pulse, which look across
+        // every business. Without this, the admin's updates would pick up the
+        // business remembered in the session and quietly show only its records.
         Livewire::setUpdateRoute(fn (array $handle) => Route::post('/livewire/update', $handle)
             ->middleware('web')
             ->withoutMiddleware([SetCurrentBusiness::class]));
+
+        // Pulse at /pulse, like Horizon: platform admins only, everywhere. It
+        // names people without fetching their Gravatar, so no hash of anyone's
+        // email address leaves the site.
+        Gate::define('viewPulse', fn (?User $user = null) => (bool) $user?->isPlatformAdmin());
+        Pulse::user(fn (User $user) => ['name' => $user->name, 'extra' => $user->email, 'avatar' => null]);
 
         Gate::define('manage-business', function (User $user): bool {
             $business = app(CurrentBusiness::class)->get();

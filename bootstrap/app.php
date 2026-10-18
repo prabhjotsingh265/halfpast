@@ -51,7 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        // The platform's own tools (Horizon): sessions and CSRF from `web`, but
+        // The platform's own tools (Horizon, Pulse): sessions and CSRF from `web`, but
         // none of the app's middleware. They run inline scripts the content
         // security policy would block, so they get every header but that one.
         $middleware->group('tools', [

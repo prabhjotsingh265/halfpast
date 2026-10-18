@@ -23,7 +23,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 /**
  * The platform admin at /admin, for whoever runs Halfpast: every business,
  * booking and payment, the webhook log and jobs that failed. Read-only,
- * apart from retrying or clearing failed jobs. Horizon is linked from it.
+ * apart from retrying or clearing failed jobs. Horizon and Pulse are linked from it.
  */
 class AdminPanelProvider extends PanelProvider
 {
@@ -52,6 +52,11 @@ class AdminPanelProvider extends PanelProvider
                     ->icon(Heroicon::OutlinedQueueList)
                     ->group('System')
                     ->sort(2),
+                NavigationItem::make('Performance')
+                    ->url(fn (): string => route('pulse'))
+                    ->icon(Heroicon::OutlinedChartBar)
+                    ->group('System')
+                    ->sort(3),
             ])
             ->middleware([
                 EncryptCookies::class,

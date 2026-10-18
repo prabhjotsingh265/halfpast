@@ -4,6 +4,7 @@ import {
     CalendarOff,
     LayoutGrid,
     SlidersHorizontal,
+    Wallet,
     Tags,
     Users,
 } from '@lucide/vue';
@@ -39,6 +40,11 @@ const mainNavItems = computed<NavItem[]>(() => [
                   title: 'Time off',
                   href: route('time-off.index'),
                   icon: CalendarOff,
+              },
+              {
+                  title: 'Earnings',
+                  href: route('earnings.index'),
+                  icon: Wallet,
               },
               {
                   title: 'Business settings',

@@ -78,6 +78,9 @@
     --color-daylight-18: var(--daylight-18);
     --color-daylight-21: var(--daylight-21);
 
+    --color-money-in: var(--money-in);
+    --color-money-out: var(--money-out);
+
     --color-chart-1: var(--chart-1);
     --color-chart-2: var(--chart-2);
     --color-chart-3: var(--chart-3);
@@ -136,6 +139,10 @@
     --border: var(--line);
     --input: var(--line);
     --ring: var(--sun-deep);
+    /* Money in and out on the earnings chart. Checked for colour-blind
+       separation and contrast against the card surface in each mode. */
+    --money-in: #af5504;
+    --money-out: #4273b0;
     --chart-1: var(--sun-deep);
     --chart-2: oklch(0.55 0.1 210);
     --chart-3: oklch(0.5 0.1 290);
@@ -174,6 +181,8 @@
     --accent: oklch(0.27 0.014 265);
     --destructive: oklch(0.68 0.17 27);
     --destructive-foreground: oklch(0.18 0.012 265);
+    --money-in: #c87a30;
+    --money-out: #578ed4;
     --chart-2: oklch(0.72 0.1 210);
     --chart-3: oklch(0.72 0.1 290);
     --chart-5: oklch(0.75 0.12 20);

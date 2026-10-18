@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Business\BookingRulesController;
 use App\Http\Controllers\Business\PaymentMethodsController;
+use App\Http\Controllers\EarningsController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\StaffController;
@@ -25,6 +26,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('services', ServiceController::class)->except('show');
             Route::resource('staff', StaffController::class)->except('show');
             Route::resource('time-off', TimeOffController::class)->only(['index', 'store', 'destroy']);
+
+            Route::get('earnings', [EarningsController::class, 'index'])->name('earnings.index');
 
             Route::get('business/booking-rules', [BookingRulesController::class, 'edit'])->name('business.rules.edit');
             Route::put('business/booking-rules', [BookingRulesController::class, 'update'])->name('business.rules.update');

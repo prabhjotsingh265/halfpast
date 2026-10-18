@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Enums\BusinessRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\Business;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -49,6 +52,17 @@ class ProfileController extends Controller
     public function destroy(ProfileDeleteRequest $request): RedirectResponse
     {
         $user = $request->user();
+
+        // A business whose only owner disappears would stay open with
+        // nobody to run it.
+        $owned = $user->businesses()
+            ->wherePivot('role', BusinessRole::Owner->value)
+            ->get()
+            ->filter(fn (Business $business) => $business->owners()->count() === 1);
+
+        if ($owned->isNotEmpty()) {
+            throw ValidationException::withMessages(['password' => 'You still run '.$owned->pluck('name')->join(', ', ' and ').'. Delete '.($owned->count() === 1 ? 'it' : 'them').' in Business settings, under Your data, first.']);
+        }
 
         Auth::logout();
 

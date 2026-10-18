@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BookingActionsController;
 use App\Http\Controllers\Business\BookingRulesController;
+use App\Http\Controllers\Business\DataController;
 use App\Http\Controllers\Business\PaymentMethodsController;
 use App\Http\Controllers\CalendarBlockController;
 use App\Http\Controllers\CalendarController;
@@ -57,6 +58,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('business/booking-rules', [BookingRulesController::class, 'update'])->name('business.rules.update');
             Route::get('business/payment-methods', [PaymentMethodsController::class, 'edit'])->name('business.payments.edit');
             Route::put('business/payment-methods', [PaymentMethodsController::class, 'update'])->name('business.payments.update');
+            Route::get('business/data', [DataController::class, 'edit'])->name('business.data.edit');
+            Route::get('business/data/export', [DataController::class, 'export'])->middleware('throttle:6,1')->name('business.data.export');
+            Route::delete('business', [DataController::class, 'destroy'])->middleware('throttle:6,1')->name('business.destroy');
         });
     });
 });

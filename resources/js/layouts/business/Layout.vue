@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { CalendarCog, CreditCard } from '@lucide/vue';
+import { CalendarCog, CreditCard, Database } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -18,6 +18,11 @@ const items: NavItem[] = [
         title: 'Payment methods',
         href: route('business.payments.edit'),
         icon: CreditCard,
+    },
+    {
+        title: 'Your data',
+        href: route('business.data.edit'),
+        icon: Database,
     },
 ];
 

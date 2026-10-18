@@ -6,6 +6,7 @@ use App\Actions\Payments\SettlePayment;
 use App\Enums\BookingStatus;
 use App\Enums\PaymentOutcome;
 use App\Enums\PaymentStatus;
+use App\Events\CalendarChanged;
 use App\Mail\PaymentReturnedMail;
 use App\Models\Booking;
 use App\Models\Business;
@@ -64,7 +65,7 @@ class FinishPayment implements ShouldQueue
             return;
         }
 
-        Booking::withoutGlobalScopes()->whereKey($payment->booking_id)
+        $cancelled = Booking::withoutGlobalScopes()->whereKey($payment->booking_id)
             ->where('status', BookingStatus::Confirmed)
             ->update(['status' => BookingStatus::Cancelled, 'cancelled_at' => now(), 'cancelled_by' => 'system', 'refund_due' => 0]);
 
@@ -81,6 +82,11 @@ class FinishPayment implements ShouldQueue
 
         $booking = Booking::withoutGlobalScopes()->findOrFail($payment->booking_id);
         $customer = Customer::withoutGlobalScopes()->find($booking->customer_id);
+
+        // Cancelled with a plain update, which the booking's observer doesn't see.
+        if ($cancelled === 1) {
+            CalendarChanged::between($booking->business_id, $booking->starts_at, $booking->blocked_until);
+        }
 
         if ($customer?->email !== null) {
             Mail::to($customer->email, $customer->name)->send(new PaymentReturnedMail($payment->refresh()));

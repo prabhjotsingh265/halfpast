@@ -46,6 +46,16 @@ services:
         healthcheck:
             disable: true
 
+    # Live updates: open calendars refresh the moment a booking comes in.
+    reverb:
+        <<: *app
+        command:
+            ['php', 'artisan', 'reverb:start', '--host=0.0.0.0', '--port=8080']
+        ports:
+            - '${FORWARD_REVERB_PORT:-8080}:8080'
+        healthcheck:
+            disable: true
+
     # Optional. Forwards Stripe's test-mode webhooks to the app, so payments
     # settle locally the way they will in production. Start it with
     # `make stripe-webhooks`; it needs STRIPE_SECRET in .env.

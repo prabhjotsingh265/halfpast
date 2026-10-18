@@ -22,8 +22,9 @@ make setup
 | http://localhost:8000/kesar-beauty-lounge | The demo salon's booking page                   |
 | http://localhost:5173                     | Vite dev server (hot reload)                    |
 | http://localhost:8025                     | Mailpit, which catches every email sent locally |
+| ws://localhost:8080                       | Reverb, which sends live calendar updates       |
 
-Log in as `demo@halfpast.test` with the password `password` to see the salon from the owner's side. `make fresh` resets it.
+Log in as `demo@halfpast.test` with the password `password` to see the salon from the owner's side. `make fresh` resets it. Open the calendar in two windows and add a booking in one: it appears in the other within a couple of seconds.
 
 On Windows, run the commands from a WSL 2 terminal.
 

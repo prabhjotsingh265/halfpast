@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Observers\TimeOffObserver;
 use App\Tenancy\BelongsToBusiness;
 use Carbon\CarbonImmutable;
 use Database\Factories\TimeOffFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable $ends_at
  * @property string|null $reason
  */
+#[ObservedBy(TimeOffObserver::class)]
 #[Fillable(['staff_id', 'starts_at', 'ends_at', 'reason'])]
 class TimeOff extends Model
 {

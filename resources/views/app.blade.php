@@ -34,10 +34,26 @@
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
+        @php($seo = $page['props']['seo'] ?? null)
+        @if ($seo)
+            <meta name="description" content="{{ $seo['description'] }}">
+            <link rel="canonical" href="{{ $seo['url'] }}">
+            <meta property="og:type" content="website">
+            <meta property="og:site_name" content="{{ config('app.name') }}">
+            <meta property="og:title" content="{{ $seo['title'] }}">
+            <meta property="og:description" content="{{ $seo['description'] }}">
+            <meta property="og:url" content="{{ $seo['url'] }}">
+            <meta name="twitter:card" content="summary">
+            <script type="application/ld+json" nonce="{{ Vite::cspNonce() }}">{!! json_encode($seo['schema'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
+        @elseif (! str_starts_with($page['component'], 'marketing/'))
+            {{-- The dashboard, checkout and personal booking links stay out of search results. --}}
+            <meta name="robots" content="noindex, nofollow">
+        @endif
+
         @routes(null, Vite::cspNonce())
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>{{ $seo ? $seo['title'].' - '.config('app.name') : config('app.name', 'Laravel') }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

@@ -23,12 +23,8 @@ const links = [
 </script>
 
 <template>
-    <Head title="Booking pages that take deposits and never double-book">
-        <meta
-            name="description"
-            content="Halfpast gives salons, clinics and tutors a booking page that takes deposits, sends reminders and never double-books."
-        />
-    </Head>
+    <!-- The description and share tags are rendered with the page, for link previews. -->
+    <Head title="Booking pages that take deposits and never double-book" />
 
     <SiteHeader :links="links" />
 

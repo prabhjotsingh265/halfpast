@@ -13,12 +13,24 @@ use App\Http\Controllers\EarningsController;
 use App\Http\Controllers\NewBookingController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffPhotoController;
 use App\Http\Controllers\TimeOffController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-Route::inertia('/', 'marketing/Home')->name('home');
+Route::get('/', fn () => Inertia::render('marketing/Home', [
+    'seo' => [
+        'title' => 'Booking pages that take deposits and never double-book',
+        'description' => 'Halfpast gives salons, clinics and tutors a booking page that takes deposits, sends reminders and never double-books.',
+        'url' => route('home'),
+        'schema' => ['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => 'Halfpast', 'url' => route('home')],
+    ],
+]))->name('home');
+
+Route::get('sitemap.xml', [SitemapController::class, 'sitemap'])->name('sitemap');
+Route::get('robots.txt', [SitemapController::class, 'robots'])->name('robots');
 
 // One click into a demo business, while demo mode is on.
 Route::post('demo/{slug}/login', DemoLoginController::class)->middleware('throttle:30,1')->name('demo.login');

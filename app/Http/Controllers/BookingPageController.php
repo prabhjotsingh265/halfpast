@@ -8,6 +8,7 @@ use App\Models\Business;
 use App\Models\Service;
 use App\Models\Staff;
 use App\Payments\Gateways;
+use App\Support\Seo\BookingPageSeo;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -53,6 +54,8 @@ class BookingPageController extends Controller
         $date = self::dateOr($request->query('date'), null);
 
         return Inertia::render('booking/Show', [
+            // For search engines and link previews; only on a full page load.
+            'seo' => fn () => BookingPageSeo::for($business, $services),
             'services' => $services->map(fn (Service $s) => [
                 'id' => $s->id,
                 'name' => $s->name,

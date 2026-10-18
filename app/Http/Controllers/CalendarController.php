@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
-use App\Models\Service;
 use App\Models\Staff;
 use App\Models\TimeOff;
 use App\Models\WorkingHour;
+use App\Support\Calendar\NewBookingOptions;
 use App\Support\Calendar\Viewer;
 use App\Tenancy\CurrentBusiness;
 use Carbon\CarbonImmutable;
@@ -84,14 +84,6 @@ class CalendarController extends Controller
             ->orderBy('starts_at')
             ->get();
 
-        // For adding a booking by hand: what's on offer, and who this person
-        // can book in (anyone for an owner; staff, themselves).
-        $services = Service::where('is_active', true)
-            ->with(['staff' => fn ($query) => $query->where('staff.is_active', true)->select('staff.id')])
-            ->orderBy('position')
-            ->orderBy('id')
-            ->get();
-
         return Inertia::render('calendar/Index', [
             'view' => $view,
             'date' => $date,
@@ -102,21 +94,7 @@ class CalendarController extends Controller
             'team' => $team->concat($person !== null && ! $team->contains($person) ? [$person] : [])
                 ->map(fn (Staff $member) => ['id' => $member->id, 'name' => $member->name])
                 ->values(),
-            'newBooking' => [
-                'services' => $services->map(fn (Service $service) => [
-                    'id' => $service->id,
-                    'name' => $service->name,
-                    'duration' => $service->duration_minutes,
-                    'price' => $service->price,
-                    'staff_ids' => $service->staff->pluck('id')->values(),
-                ])->values(),
-                'staff' => ($viewer->isOwner ? $team : $team->whereIn('id', $viewer->staffIds))
-                    ->map(fn (Staff $member) => ['id' => $member->id, 'name' => $member->name])
-                    ->values(),
-                'currency' => $business->currency,
-                // Owners can block out time for the whole business.
-                'can_close' => $viewer->isOwner,
-            ],
+            'newBooking' => NewBookingOptions::for($viewer),
             'staff' => $staff->map(fn (Staff $member) => [
                 'id' => $member->id,
                 'name' => $member->name,

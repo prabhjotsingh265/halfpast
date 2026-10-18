@@ -1,5 +1,10 @@
 export type CalendarBookingStatus =
-    'held' | 'confirmed' | 'completed' | 'no_show';
+    | 'held'
+    | 'confirmed'
+    | 'completed'
+    | 'no_show'
+    /** Never on the calendar itself, but in a customer's history. */
+    | 'cancelled';
 
 export type CalendarBooking = {
     id: number;
@@ -71,4 +76,13 @@ export type NewBookingPreset = {
     staffId: number | null;
     /** "14:30", in the business's time. */
     time: string | null;
+    /** Booking someone again from their customer page. */
+    customer?: CustomerSummary | null;
+};
+
+export type CustomerSummary = {
+    id: number;
+    name: string;
+    email: string | null;
+    phone: string | null;
 };

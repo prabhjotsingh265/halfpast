@@ -9,6 +9,7 @@ export const statusLabel: Record<CalendarBookingStatus, string> = {
     confirmed: 'Confirmed',
     completed: 'Completed',
     no_show: 'No-show',
+    cancelled: 'Cancelled',
 };
 
 /** The left edge of a booking block says where it stands. */
@@ -17,6 +18,7 @@ export const statusEdge: Record<CalendarBookingStatus, string> = {
     held: 'border-2 border-dashed border-sun-deep/70',
     completed: 'border-success',
     no_show: 'border-destructive opacity-70',
+    cancelled: 'border-muted-foreground/40 opacity-60',
 };
 
 /** Overlapping ranges joined: [[9,12],[11,14],[15,16]] → [[9,14],[15,16]]. */

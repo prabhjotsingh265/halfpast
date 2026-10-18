@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import {
     CalendarDays,
     CalendarOff,
+    Contact,
     LayoutGrid,
     SlidersHorizontal,
     Wallet,
@@ -37,9 +38,14 @@ const mainNavItems = computed<NavItem[]>(() => [
         href: route('calendar'),
         icon: CalendarDays,
     },
-    // Setting up what's sold and who works there is for owners.
+    // Customers, and setting up what's sold and who works there, are for owners.
     ...(page.props.business?.role === 'owner'
         ? [
+              {
+                  title: 'Customers',
+                  href: route('customers.index'),
+                  icon: Contact,
+              },
               { title: 'Services', href: route('services.index'), icon: Tags },
               { title: 'Team', href: route('staff.index'), icon: Users },
               {

@@ -52,6 +52,7 @@ const statusText: Record<CalendarBooking['status'], string> = {
     confirmed: 'Confirmed',
     completed: 'Completed',
     no_show: 'No-show',
+    cancelled: 'Cancelled',
 };
 
 const gatewayText: Record<string, string> = {

@@ -5,6 +5,7 @@ use App\Http\Controllers\Business\BookingRulesController;
 use App\Http\Controllers\Business\PaymentMethodsController;
 use App\Http\Controllers\CalendarBlockController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EarningsController;
 use App\Http\Controllers\NewBookingController;
@@ -40,6 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('services', ServiceController::class)->except('show');
             Route::resource('staff', StaffController::class)->except('show');
             Route::resource('time-off', TimeOffController::class)->only(['index', 'store', 'destroy']);
+            Route::resource('customers', CustomerController::class)->only(['index', 'show', 'update', 'destroy']);
 
             Route::get('earnings', [EarningsController::class, 'index'])->name('earnings.index');
 

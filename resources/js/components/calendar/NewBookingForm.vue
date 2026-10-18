@@ -44,7 +44,7 @@ const form = useForm({
           : null,
     date: props.preset.date < props.today ? props.today : props.preset.date,
     time: props.preset.time ?? '',
-    customer_id: null as number | null,
+    customer_id: (props.preset.customer?.id ?? null) as number | null,
     name: '',
     email: '',
     phone: '',
@@ -52,7 +52,7 @@ const form = useForm({
     tell_customer: true,
 });
 
-const picked = ref<Customer | null>(null);
+const picked = ref<Customer | null>(props.preset.customer ?? null);
 const suggestions = ref<Customer[]>([]);
 const active = ref(-1);
 

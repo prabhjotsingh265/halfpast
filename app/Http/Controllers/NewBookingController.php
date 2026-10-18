@@ -66,13 +66,8 @@ class NewBookingController extends Controller
             return response()->json([]);
         }
 
-        $like = '%'.addcslashes(mb_strtolower($search), '%_\\').'%';
-        $digits = preg_replace('/\D/', '', $search);
-
-        $customers = Customer::where(fn ($query) => $query
-            ->whereRaw('lower(name) like ?', [$like])
-            ->orWhereRaw('lower(email) like ?', [$like])
-            ->when(strlen((string) $digits) >= 3, fn ($query) => $query->orWhereRaw("regexp_replace(coalesce(phone, ''), '\\D', '', 'g') like ?", ['%'.$digits.'%'])))
+        $customers = Customer::matching($search)
+            ->whereNull('forgotten_at')
             ->orderBy('name')
             ->limit(6)
             ->get(['id', 'name', 'email', 'phone']);

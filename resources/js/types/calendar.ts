@@ -45,6 +45,8 @@ export type CalendarTimeOff = {
     starts_at: string;
     ends_at: string;
     reason: string | null;
+    /** Whether the person looking can free this time up. */
+    can_remove: boolean;
 };
 
 /** What the new-booking form can offer this person. */
@@ -59,6 +61,8 @@ export type NewBookingOptions = {
     /** Who they can book in: anyone for an owner, themselves for staff. */
     staff: { id: number; name: string }[];
     currency: string;
+    /** Owners can block out time for the whole business. */
+    can_close: boolean;
 };
 
 /** Where the form was opened from: a day, and maybe a column and a time. */

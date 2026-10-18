@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { ChevronLeft, ChevronRight, Plus } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
+import AddSheet from '@/components/calendar/AddSheet.vue';
 import BookingList from '@/components/calendar/BookingList.vue';
 import BookingSheet from '@/components/calendar/BookingSheet.vue';
 import DayGrid from '@/components/calendar/DayGrid.vue';
-import NewBookingSheet from '@/components/calendar/NewBookingSheet.vue';
+import TimeOffSheet from '@/components/calendar/TimeOffSheet.vue';
 import WeekGrid from '@/components/calendar/WeekGrid.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,39 @@ const selected = ref<CalendarBooking | null>(null);
 const sheetOpen = ref(false);
 
 const canBook = computed(() => props.newBooking.staff.length > 0);
+
+const page = usePage();
+const businessName = computed(
+    () => (page.props.business as { name?: string } | null)?.name ?? '',
+);
+
+// Time off opened from the calendar.
+const offSelected = ref<CalendarTimeOff | null>(null);
+const offOpen = ref(false);
+
+function openOff(entry: CalendarTimeOff): void {
+    offSelected.value = entry;
+    offOpen.value = true;
+}
+
+watch(
+    () => props.timeOff,
+    (entries) => {
+        if (
+            offSelected.value &&
+            !entries.some((e) => e.id === offSelected.value?.id)
+        ) {
+            offOpen.value = false;
+        }
+    },
+);
+
+const offStaffName = computed(
+    () =>
+        props.team.find((m) => m.id === offSelected.value?.staff_id)?.name ??
+        props.staff.find((m) => m.id === offSelected.value?.staff_id)?.name ??
+        null,
+);
 const adding = ref(false);
 const preset = ref<NewBookingPreset>({
     date: props.date,
@@ -313,6 +347,7 @@ const staffName = computed(() => {
                 :time-off="timeOff"
                 @open="open"
                 @pick="(staffId, minutes) => add({ staffId, minutes })"
+                @off="openOff"
             />
             <WeekGrid
                 v-else-if="view === 'week'"
@@ -326,6 +361,7 @@ const staffName = computed(() => {
                 @open="open"
                 @day="(day) => go({ view: 'day', date: day })"
                 @pick="(day, minutes) => add({ date: day, minutes })"
+                @off="openOff"
             />
             <BookingList
                 v-else
@@ -336,6 +372,7 @@ const staffName = computed(() => {
                 :bookings="bookings"
                 :time-off="timeOff"
                 @open="open"
+                @off="openOff"
             />
         </div>
 
@@ -346,7 +383,15 @@ const staffName = computed(() => {
             :staff-name="staffName"
         />
 
-        <NewBookingSheet
+        <TimeOffSheet
+            v-model:open="offOpen"
+            :entry="offSelected"
+            :staff-name="offStaffName"
+            :timezone="timezone"
+            :business-name="businessName"
+        />
+
+        <AddSheet
             v-if="canBook"
             v-model:open="adding"
             :options="newBooking"

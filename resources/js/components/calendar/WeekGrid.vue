@@ -30,6 +30,7 @@ const emit = defineEmits<{
     open: [booking: CalendarBooking];
     day: [date: string];
     pick: [date: string, minutes: number];
+    off: [entry: CalendarTimeOff];
 }>();
 
 /** A click on empty space: that day, at the quarter hour clicked. */
@@ -268,20 +269,23 @@ onMounted(async () => {
                 />
 
                 <!-- Closures, and the person's own time off when one is shown. -->
-                <div
+                <button
                     v-for="{ entry, from, to } in offOn(day)"
                     :key="`off-${entry.id}`"
-                    class="absolute inset-x-1 overflow-hidden rounded-md bg-[repeating-linear-gradient(135deg,var(--muted)_0_6px,color-mix(in_oklch,var(--ink)_10%,transparent)_6px_7px)] px-2 py-1 text-xs text-muted-foreground"
+                    type="button"
+                    class="absolute inset-x-1 overflow-hidden rounded-md bg-[repeating-linear-gradient(135deg,var(--muted)_0_6px,color-mix(in_oklch,var(--ink)_10%,transparent)_6px_7px)] px-2 py-1 text-left align-top text-xs text-muted-foreground transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                     :style="{
                         top: `${top(from)}px`,
                         height: `${(to - from) * PPM}px`,
                     }"
+                    :data-test="`off-${entry.id}`"
+                    @click="emit('off', entry)"
                 >
                     {{ entry.staff_id === null ? 'Closed' : 'Off' }}
                     <template v-if="entry.reason">
                         · {{ entry.reason }}</template
                     >
-                </div>
+                </button>
 
                 <div
                     v-if="nowMinutes !== null && day === today"

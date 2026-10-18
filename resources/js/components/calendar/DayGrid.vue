@@ -29,6 +29,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     open: [booking: CalendarBooking];
     pick: [staffId: number, minutes: number];
+    off: [entry: CalendarTimeOff];
 }>();
 
 const scroller = ref<HTMLElement | null>(null);
@@ -165,18 +166,21 @@ onMounted(async () => {
                 />
 
                 <!-- Time off and closures. -->
-                <div
+                <button
                     v-for="off in offFor(member.id)"
                     :key="`off-${off.id}`"
-                    class="absolute inset-x-1 overflow-hidden rounded-md bg-[repeating-linear-gradient(135deg,var(--muted)_0_6px,color-mix(in_oklch,var(--ink)_10%,transparent)_6px_7px)] px-2 py-1 text-xs text-muted-foreground"
+                    type="button"
+                    class="absolute inset-x-1 overflow-hidden rounded-md bg-[repeating-linear-gradient(135deg,var(--muted)_0_6px,color-mix(in_oklch,var(--ink)_10%,transparent)_6px_7px)] px-2 py-1 text-left align-top text-xs text-muted-foreground transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                     :style="{
                         top: `${top(at(off.starts_at))}px`,
                         height: `${(at(off.ends_at) - at(off.starts_at)) * PPM}px`,
                     }"
+                    :data-test="`off-${off.id}`"
+                    @click="emit('off', off)"
                 >
                     {{ off.staff_id === null ? 'Closed' : 'Off' }}
                     <template v-if="off.reason"> · {{ off.reason }}</template>
-                </div>
+                </button>
 
                 <div
                     v-if="nowMinutes !== null"

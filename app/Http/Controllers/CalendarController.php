@@ -119,6 +119,8 @@ class CalendarController extends Controller
                     ->map(fn (Staff $member) => ['id' => $member->id, 'name' => $member->name])
                     ->values(),
                 'currency' => $business->currency,
+                // Owners can block out time for the whole business.
+                'can_close' => $owner,
             ],
             'staff' => $staff->map(fn (Staff $member) => [
                 'id' => $member->id,
@@ -137,6 +139,8 @@ class CalendarController extends Controller
                 'starts_at' => $entry->starts_at->utc()->toIso8601ZuluString(),
                 'ends_at' => $entry->ends_at->utc()->toIso8601ZuluString(),
                 'reason' => $entry->reason,
+                // The rule in TimeOffPolicy: owners, or staff for their own.
+                'can_remove' => $owner || in_array($entry->staff_id, $mine, true),
             ])->values(),
         ]);
     }

@@ -26,7 +26,10 @@ const props = defineProps<{
     timeOff: CalendarTimeOff[];
 }>();
 
-const emit = defineEmits<{ open: [booking: CalendarBooking] }>();
+const emit = defineEmits<{
+    open: [booking: CalendarBooking];
+    off: [entry: CalendarTimeOff];
+}>();
 
 const onePerson = computed(() => props.staff.length === 1);
 const names = computed(
@@ -203,9 +206,12 @@ function tintFor(booking: CalendarBooking) {
                             >
                         </span>
                     </button>
-                    <div
+                    <button
                         v-else
-                        class="flex items-center gap-3 bg-[repeating-linear-gradient(135deg,transparent_0_6px,color-mix(in_oklch,var(--ink)_6%,transparent)_6px_7px)] px-3 py-2.5 text-sm text-muted-foreground sm:px-4"
+                        type="button"
+                        class="flex w-full items-center gap-3 bg-[repeating-linear-gradient(135deg,transparent_0_6px,color-mix(in_oklch,var(--ink)_6%,transparent)_6px_7px)] px-3 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none sm:px-4"
+                        :data-test="`off-${item.off.id}`"
+                        @click="emit('off', item.off)"
                     >
                         <span class="w-[5.5rem] shrink-0 text-xs">{{
                             item.when
@@ -216,7 +222,7 @@ function tintFor(booking: CalendarBooking) {
                                 · {{ item.off.reason }}</template
                             >
                         </span>
-                    </div>
+                    </button>
                 </li>
             </ul>
         </section>

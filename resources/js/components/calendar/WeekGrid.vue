@@ -161,6 +161,39 @@ function subtitle(booking: CalendarBooking): string {
     return names.value.get(booking.staff_id ?? 0) ?? '';
 }
 
+/**
+ * Read after the visible text, so the button's name starts with what's on
+ * screen (for voice control) and still gives the rest of the details.
+ */
+function moreFor(
+    block: { booking: CalendarBooking; short: boolean },
+    day: string,
+): string {
+    const booking = block.booking;
+    const parts = [
+        formatDate(day, { weekday: 'long' }),
+        `until ${timeIn(booking.ends_at, props.timezone)}`,
+    ];
+
+    // The customer shows on a roomy block when one person is shown.
+    if (block.short || !onePerson.value) {
+        parts.push(booking.customer?.name ?? 'walk-in');
+    }
+
+    // Who it's with shows on a roomy block when everyone is shown.
+    if (block.short && !onePerson.value) {
+        parts.push(
+            `with ${names.value.get(booking.staff_id ?? 0) ?? 'anyone'}`,
+        );
+    }
+
+    if (booking.status !== 'confirmed') {
+        parts.push(statusLabel[booking.status].toLowerCase());
+    }
+
+    return `, ${parts.join(', ')}`;
+}
+
 const nowMinutes = computed(() => {
     const minutes = props.days.includes(props.today)
         ? minutesOnDay(now.value.toISOString(), props.today, props.timezone)
@@ -217,7 +250,6 @@ onMounted(async () => {
                 :key="day"
                 type="button"
                 class="sticky top-0 z-20 flex items-center gap-2 border-b border-l bg-card px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
-                :aria-label="`Open ${formatDate(day, { weekday: 'long', day: 'numeric', month: 'long' })}`"
                 :data-test="`day-${day}`"
                 @click="emit('day', day)"
             >
@@ -231,12 +263,21 @@ onMounted(async () => {
                     "
                     >{{ formatDate(day, { day: 'numeric' }) }}</span
                 >
+                <span class="sr-only">
+                    {{ formatDate(day, { month: 'long' }) }}</span
+                >
                 <span
                     v-if="(byDay.get(day) ?? []).length > 0"
                     class="ml-auto text-xs text-muted-foreground"
                 >
-                    {{ (byDay.get(day) ?? []).length }}
+                    {{ (byDay.get(day) ?? []).length
+                    }}<span class="sr-only">{{
+                        (byDay.get(day) ?? []).length === 1
+                            ? ' booking'
+                            : ' bookings'
+                    }}</span>
                 </span>
+                <span class="sr-only">, open this day</span>
             </button>
 
             <TimeAxis :range="range" :marks="hourMarks" :now="nowMinutes" />
@@ -308,7 +349,6 @@ onMounted(async () => {
                         '--tint': block.tint,
                         '--tint-dark': block.tintDark,
                     }"
-                    :aria-label="`${block.booking.service_name}, ${formatDate(day, { weekday: 'long' })} ${timeIn(block.booking.starts_at, timezone)} to ${timeIn(block.booking.ends_at, timezone)}, ${block.booking.customer?.name ?? 'no customer'}, with ${names.get(block.booking.staff_id ?? 0) ?? 'anyone'}, ${statusLabel[block.booking.status]}`"
                     :data-test="`booking-${block.booking.code}`"
                     @click="emit('open', block.booking)"
                 >
@@ -335,6 +375,7 @@ onMounted(async () => {
                             subtitle(block.booking)
                         }}</span>
                     </template>
+                    <span class="sr-only">{{ moreFor(block, day) }}</span>
                 </button>
             </div>
         </div>

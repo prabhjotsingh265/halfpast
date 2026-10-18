@@ -89,6 +89,24 @@ function block(booking: CalendarBooking) {
     };
 }
 
+/**
+ * Read after the visible text, so the button's name starts with what's on
+ * screen (for voice control) and still gives the rest of the details.
+ */
+function moreFor(booking: CalendarBooking): string {
+    const parts = [`until ${timeIn(booking.ends_at, props.timezone)}`];
+
+    if (block(booking).short) {
+        parts.push(booking.customer?.name ?? 'walk-in');
+
+        if (booking.status !== 'confirmed') {
+            parts.push(statusLabel[booking.status].toLowerCase());
+        }
+    }
+
+    return `, ${parts.join(', ')}`;
+}
+
 const nowMinutes = computed(() => {
     const minutes =
         props.date === props.today
@@ -213,7 +231,6 @@ onMounted(async () => {
                             '--tint': block(booking).tint,
                             '--tint-dark': block(booking).tintDark,
                         }"
-                        :aria-label="`${booking.service_name}, ${timeIn(booking.starts_at, timezone)} to ${timeIn(booking.ends_at, timezone)}, ${booking.customer?.name ?? 'no customer'}, ${statusLabel[booking.status]}`"
                         :data-test="`booking-${booking.code}`"
                         @click="emit('open', booking)"
                     >
@@ -248,6 +265,7 @@ onMounted(async () => {
                                 booking.customer?.name ?? 'Walk-in'
                             }}</span>
                         </template>
+                        <span class="sr-only">{{ moreFor(booking) }}</span>
                     </button>
                 </template>
             </div>

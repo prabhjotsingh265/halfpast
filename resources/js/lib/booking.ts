@@ -56,6 +56,27 @@ export function dayPart(hour: number): DayPart {
     return hour < 17 ? 'Afternoon' : 'Evening';
 }
 
+const dateFormats = new Map<string, Intl.DateTimeFormat>();
+
+/** The calendar date a moment falls on in a zone, as "YYYY-MM-DD". */
+export function dateIn(instant: string | Date, zone: string): string {
+    let format = dateFormats.get(zone);
+
+    if (!format) {
+        format = new Intl.DateTimeFormat('en-CA', {
+            timeZone: zone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        });
+        dateFormats.set(zone, format);
+    }
+
+    return format.format(
+        typeof instant === 'string' ? new Date(instant) : instant,
+    );
+}
+
 /**
  * Minutes since midnight on `date`, as the clock reads in `zone`. Moments
  * before that day give 0 and after it 1440, so blocks clip to the day.
@@ -65,12 +86,7 @@ export function minutesOnDay(
     date: string,
     zone: string,
 ): number {
-    const day = new Intl.DateTimeFormat('en-CA', {
-        timeZone: zone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    }).format(new Date(instant));
+    const day = dateIn(instant, zone);
 
     if (day < date) {
         return 0;

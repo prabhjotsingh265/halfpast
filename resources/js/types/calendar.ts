@@ -27,11 +27,13 @@ export type CalendarBooking = {
     } | null;
 };
 
+export type CalendarView = 'day' | 'week' | 'list';
+
 export type CalendarStaff = {
     id: number;
     name: string;
-    /** That day's working hours, in minutes since midnight. */
-    hours: [number, number][];
+    /** Working hours for each date shown, in minutes since midnight. */
+    hours: Record<string, [number, number][]>;
 };
 
 export type CalendarTimeOff = {

@@ -11,57 +11,90 @@ use App\Models\TimeOff;
 use App\Models\WorkingHour;
 use App\Tenancy\CurrentBusiness;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The owner's calendar: a day at a time, a column per person, with their
- * working hours, bookings and time off, in the business's own time.
+ * The calendar, in the business's own time: a day with a column per person,
+ * a week (Monday to Sunday) with a column per day, or that week as a list.
+ * It can be narrowed to one person, and remembers the last view used.
  */
 class CalendarController extends Controller
 {
+    public const VIEWS = ['day', 'week', 'list'];
+
+    public const SESSION_VIEW = 'calendar.view';
+
     public function index(Request $request, CurrentBusiness $current): Response
     {
         $business = $current->require();
         $zone = $business->timezone;
         $today = CarbonImmutable::now($zone)->toDateString();
         $date = self::date($request->query('date')) ?? $today;
+        $view = $this->view($request);
 
-        $dayStart = CarbonImmutable::parse($date, $zone)->startOfDay();
-        $dayEnd = $dayStart->addDay()->startOfDay();
+        $from = CarbonImmutable::parse($date, $zone)->startOfDay();
 
-        $bookings = $this->bookingsBetween($dayStart, $dayEnd);
+        if ($view !== 'day') {
+            $from = $from->startOfWeek(CarbonInterface::MONDAY);
+        }
 
-        // Everyone taking bookings, plus anyone else with a booking that day.
-        $staff = Staff::where('is_active', true)
+        // Whole calendar days, so a week with a clock change still ends at midnight.
+        $length = $view === 'day' ? 1 : 7;
+        $to = $from->addDays($length)->startOfDay();
+        $days = collect(range(0, $length - 1))->map(fn (int $i) => $from->addDays($i)->toDateString());
+
+        $person = self::id($request->query('staff'));
+        $person = $person === null ? null : Staff::find($person);
+
+        $bookings = $this->bookingsBetween($from, $to)
+            ->when($person !== null, fn (Collection $all) => $all->where('staff_id', $person?->id)->values());
+
+        $team = Staff::where('is_active', true)->orderBy('position')->orderBy('id')->get();
+
+        // One person, or everyone taking bookings plus anyone else booked in this range.
+        $staff = $person !== null ? collect([$person]) : Staff::where('is_active', true)
             ->orWhereIn('id', $bookings->pluck('staff_id')->filter())
             ->orderBy('position')
             ->orderBy('id')
             ->get();
 
-        $hours = WorkingHour::whereIn('staff_id', $staff->pluck('id'))
-            ->where('weekday', $dayStart->isoWeekday())
-            ->orderBy('starts_at')
-            ->get()
-            ->groupBy('staff_id');
+        // Each person's working hours by weekday, in minutes since midnight.
+        /** @var array<int, array<int, list<array{int, int}>>> $weekly */
+        $weekly = [];
 
-        $timeOff = TimeOff::where('starts_at', '<', $dayEnd->utc())
-            ->where('ends_at', '>', $dayStart->utc())
+        foreach (WorkingHour::whereIn('staff_id', $staff->pluck('id'))->orderBy('starts_at')->get() as $hour) {
+            $weekly[$hour->staff_id][$hour->weekday][] = [
+                WorkingHour::minutesOf($hour->starts_at),
+                WorkingHour::minutesOf($hour->ends_at),
+            ];
+        }
+
+        $timeOff = TimeOff::where('starts_at', '<', $to->utc())
+            ->where('ends_at', '>', $from->utc())
+            ->when($person !== null, fn ($query) => $query->where(fn ($query) => $query->whereNull('staff_id')->orWhere('staff_id', $person?->id)))
+            ->orderBy('starts_at')
             ->get();
 
         return Inertia::render('calendar/Index', [
+            'view' => $view,
             'date' => $date,
+            'days' => $days->values(),
             'today' => $today,
             'timezone' => $zone,
+            'person' => $person?->id,
+            'team' => $team->push(...($person !== null && ! $team->contains($person) ? [$person] : []))
+                ->map(fn (Staff $member) => ['id' => $member->id, 'name' => $member->name])
+                ->values(),
             'staff' => $staff->map(fn (Staff $member) => [
                 'id' => $member->id,
                 'name' => $member->name,
-                'hours' => $hours->get($member->id, collect())->map(fn (WorkingHour $hour) => [
-                    WorkingHour::minutesOf($hour->starts_at),
-                    WorkingHour::minutesOf($hour->ends_at),
-                ])->values(),
+                'hours' => $days->mapWithKeys(fn (string $day) => [
+                    $day => $weekly[$member->id][CarbonImmutable::parse($day)->isoWeekday()] ?? [],
+                ]),
             ])->values(),
             'bookings' => $bookings->map(fn (Booking $booking) => self::present($booking))->values(),
             'timeOff' => $timeOff->map(fn (TimeOff $entry) => [
@@ -123,8 +156,29 @@ class CalendarController extends Controller
         ];
     }
 
+    /** The view asked for, kept for next time; otherwise the last one used. */
+    private function view(Request $request): string
+    {
+        $asked = $request->query('view');
+
+        if (is_string($asked) && in_array($asked, self::VIEWS, true)) {
+            $request->session()->put(self::SESSION_VIEW, $asked);
+
+            return $asked;
+        }
+
+        $remembered = $request->session()->get(self::SESSION_VIEW);
+
+        return is_string($remembered) && in_array($remembered, self::VIEWS, true) ? $remembered : 'day';
+    }
+
     private static function date(mixed $value): ?string
     {
         return is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1 && strtotime($value) !== false ? $value : null;
+    }
+
+    private static function id(mixed $value): ?int
+    {
+        return is_string($value) && ctype_digit($value) && strlen($value) < 10 ? (int) $value : null;
     }
 }

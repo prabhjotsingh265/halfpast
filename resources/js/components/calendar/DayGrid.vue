@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
+import TimeAxis from '@/components/calendar/TimeAxis.vue';
 import MemberAvatar from '@/components/staff/MemberAvatar.vue';
+import { PPM, useNow, useTimeScale } from '@/composables/useTimeScale';
 import { minutesOnDay, timeIn } from '@/lib/booking';
+import { statusEdge, statusLabel } from '@/lib/calendar';
 import { daylight } from '@/lib/daylight';
 import type {
     CalendarBooking,
@@ -25,54 +28,24 @@ const props = defineProps<{
 
 const emit = defineEmits<{ open: [booking: CalendarBooking] }>();
 
-/** Pixels per minute: an hour is 90px tall. */
-const PPM = 1.5;
-
 const scroller = ref<HTMLElement | null>(null);
-const now = ref(new Date());
-let timer = 0;
+const now = useNow();
 
 const at = (instant: string) =>
     minutesOnDay(instant, props.date, props.timezone);
 
-/** From the earliest start to the latest finish that day, in whole hours. */
-const range = computed<[number, number]>(() => {
-    const starts = [
-        ...props.staff.flatMap((s) => s.hours.map(([from]) => from)),
+const hoursOf = (member: CalendarStaff) => member.hours[props.date] ?? [];
+
+const { range, hourMarks, height, top, inRange } = useTimeScale(() => ({
+    starts: [
+        ...props.staff.flatMap((s) => hoursOf(s).map(([from]) => from)),
         ...props.bookings.map((b) => at(b.starts_at)),
-    ];
-    const ends = [
-        ...props.staff.flatMap((s) => s.hours.map(([, to]) => to)),
+    ],
+    ends: [
+        ...props.staff.flatMap((s) => hoursOf(s).map(([, to]) => to)),
         ...props.bookings.map((b) => at(b.blocked_until)),
-    ];
-
-    if (starts.length === 0) {
-        return [9 * 60, 18 * 60];
-    }
-
-    const from = Math.max(0, Math.floor(Math.min(...starts) / 60) * 60 - 60);
-    const to = Math.min(24 * 60, Math.ceil(Math.max(...ends) / 60) * 60 + 60);
-
-    return [from, Math.max(to, from + 8 * 60)];
-});
-
-const hourMarks = computed(() => {
-    const marks: number[] = [];
-
-    for (let m = range.value[0]; m <= range.value[1]; m += 60) {
-        marks.push(m);
-    }
-
-    return marks;
-});
-
-const height = computed(() => (range.value[1] - range.value[0]) * PPM);
-const top = (minutes: number) => (minutes - range.value[0]) * PPM;
-
-const hourLabel = new Intl.DateTimeFormat(undefined, { hour: 'numeric' });
-function labelFor(minutes: number): string {
-    return hourLabel.format(new Date(2000, 0, 1, Math.floor(minutes / 60)));
-}
+    ],
+}));
 
 function bookingsFor(staffId: number): CalendarBooking[] {
     return props.bookings.filter((b) => b.staff_id === staffId);
@@ -100,28 +73,16 @@ function block(booking: CalendarBooking) {
     };
 }
 
-const statusLabel: Record<CalendarBooking['status'], string> = {
-    held: 'Held',
-    confirmed: 'Confirmed',
-    completed: 'Completed',
-    no_show: 'No-show',
-};
+const nowMinutes = computed(() => {
+    const minutes =
+        props.date === props.today
+            ? minutesOnDay(now.value.toISOString(), props.date, props.timezone)
+            : null;
 
-const nowMinutes = computed(() =>
-    props.date === props.today
-        ? minutesOnDay(now.value.toISOString(), props.date, props.timezone)
-        : null,
-);
-const nowVisible = computed(
-    () =>
-        nowMinutes.value !== null &&
-        nowMinutes.value >= range.value[0] &&
-        nowMinutes.value <= range.value[1],
-);
+    return inRange(minutes) ? minutes : null;
+});
 
 onMounted(async () => {
-    timer = window.setInterval(() => (now.value = new Date()), 30_000);
-
     // Start the view at now (today) or at the first booking.
     await nextTick();
     const first =
@@ -129,8 +90,6 @@ onMounted(async () => {
         (props.bookings[0] ? at(props.bookings[0].starts_at) : range.value[0]);
     scroller.value?.scrollTo({ top: Math.max(0, top(first) - 120) });
 });
-
-onBeforeUnmount(() => window.clearInterval(timer));
 </script>
 
 <template>
@@ -161,26 +120,7 @@ onBeforeUnmount(() => window.clearInterval(timer));
                 </span>
             </div>
 
-            <!-- Time axis. -->
-            <div
-                class="sticky left-0 z-10 bg-card"
-                :style="{ height: `${height}px` }"
-            >
-                <span
-                    v-for="mark in hourMarks"
-                    :key="mark"
-                    class="absolute right-2 -translate-y-1/2 text-[10px] text-muted-foreground tabular-nums"
-                    :style="{ top: `${top(mark)}px` }"
-                >
-                    {{ mark < 24 * 60 ? labelFor(mark) : '' }}
-                </span>
-                <span
-                    v-if="nowVisible"
-                    class="absolute right-0 size-2 translate-x-1/2 -translate-y-1/2 rounded-full bg-destructive"
-                    :style="{ top: `${top(nowMinutes!)}px` }"
-                    data-test="now-dot"
-                />
-            </div>
+            <TimeAxis :range="range" :marks="hourMarks" :now="nowMinutes" />
 
             <!-- A column per person. -->
             <div
@@ -192,7 +132,7 @@ onBeforeUnmount(() => window.clearInterval(timer));
             >
                 <!-- Working hours are the clear parts. -->
                 <div
-                    v-for="([from, to], index) in member.hours"
+                    v-for="([from, to], index) in hoursOf(member)"
                     :key="index"
                     class="absolute inset-x-0 bg-card"
                     :style="{
@@ -223,9 +163,9 @@ onBeforeUnmount(() => window.clearInterval(timer));
                 </div>
 
                 <div
-                    v-if="nowVisible"
+                    v-if="nowMinutes !== null"
                     class="pointer-events-none absolute inset-x-0 z-10 h-px bg-destructive"
-                    :style="{ top: `${top(nowMinutes!)}px` }"
+                    :style="{ top: `${top(nowMinutes)}px` }"
                     data-test="now-line"
                 />
 
@@ -246,14 +186,7 @@ onBeforeUnmount(() => window.clearInterval(timer));
                     <button
                         type="button"
                         class="booking absolute inset-x-1 overflow-hidden rounded-md border-l-[3px] bg-[var(--tint)] px-2 py-1 text-left text-xs shadow-sm transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none dark:bg-[var(--tint-dark)]"
-                        :class="{
-                            'border-sun-deep': booking.status === 'confirmed',
-                            'border-2 border-dashed border-sun-deep/70':
-                                booking.status === 'held',
-                            'border-success': booking.status === 'completed',
-                            'border-destructive opacity-70':
-                                booking.status === 'no_show',
-                        }"
+                        :class="statusEdge[booking.status]"
                         :style="{
                             top: `${block(booking).top}px`,
                             height: `${block(booking).height}px`,

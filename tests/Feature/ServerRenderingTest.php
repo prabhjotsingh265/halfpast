@@ -7,6 +7,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request as SsrRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     config(['inertia.ssr.enabled' => true, 'inertia.ssr.ensure_bundle_exists' => false]);
@@ -28,7 +29,8 @@ it('renders booking pages on the server, with the routes their links need', func
     $this->get('/glow-studio')
         ->assertOk()
         ->assertSee('Rendered: booking/Show', false)
-        ->assertSee('<meta name="rendered-by" content="server">', false);
+        ->assertSee('<meta name="rendered-by" content="server">', false)
+        ->assertInertia(fn (Assert $page) => $page->component('booking/Show')->has('ziggy.routes')->where('ziggy.url', url('/')));
 
     Http::assertSent(fn (SsrRequest $request) => $request['component'] === 'booking/Show'
         && isset($request['props']['ziggy']['routes']['booking.hold']));
@@ -40,12 +42,14 @@ it('leaves the dashboard and the home page to the browser, without the route lis
     $owner = User::factory()->create();
     Business::factory()->ownedBy($owner)->create();
 
-    $dashboard = $this->actingAs($owner)->get(route('dashboard'))->assertOk();
-    $home = $this->get('/')->assertOk();
+    $this->actingAs($owner)->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('Dashboard')->missing('ziggy'));
+    $this->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('marketing/Home')->missing('ziggy'));
 
     Http::assertNothingSent();
-    expect($dashboard->getContent())->not->toContain('&quot;ziggy&quot;')
-        ->and($home->getContent())->not->toContain('&quot;ziggy&quot;');
 });
 
 it("doesn't send the route list with visits between pages, which the browser renders", function () {
@@ -66,7 +70,7 @@ it('falls back to the browser when the renderer is down', function () {
 
     $this->get('/glow-studio')
         ->assertOk()
-        ->assertSee('booking/Show')
+        ->assertInertia(fn (Assert $page) => $page->component('booking/Show'))
         ->assertDontSee('data-server-rendered', false);
 });
 

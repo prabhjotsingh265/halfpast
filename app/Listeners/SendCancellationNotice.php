@@ -12,7 +12,7 @@ class SendCancellationNotice
     {
         $customer = $event->booking->loadMissing('customer')->customer;
 
-        if ($customer?->email === null) {
+        if (! $event->tellCustomer || $customer?->email === null) {
             return;
         }
 

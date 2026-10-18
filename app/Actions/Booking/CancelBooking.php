@@ -17,13 +17,15 @@ class CancelBooking
 {
     /**
      * @param  'customer'|'business'  $by
-     * @param  bool  $refundInFull  The business choosing to refund regardless of the window.
+     * @param  bool|null  $refund  The business's choice: the whole deposit back (true) or
+     *                             none of it (false). Null follows the cancellation window.
+     * @param  bool  $tellCustomer  Whether the customer gets the cancellation email.
      */
-    public function handle(Booking $booking, string $by, bool $refundInFull = false, ?CarbonImmutable $now = null): bool
+    public function handle(Booking $booking, string $by, ?bool $refund = null, ?CarbonImmutable $now = null, bool $tellCustomer = true): bool
     {
         $now ??= CarbonImmutable::now();
 
-        $cancelled = DB::transaction(function () use ($booking, $by, $refundInFull, $now) {
+        $cancelled = DB::transaction(function () use ($booking, $by, $refund, $now) {
             $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             $business = Business::findOrFail($locked->business_id);
             $terms = CancellationTerms::for($locked, $business, $now);
@@ -36,7 +38,11 @@ class CancelBooking
                 'status' => BookingStatus::Cancelled,
                 'cancelled_at' => $now,
                 'cancelled_by' => $by,
-                'refund_due' => $refundInFull ? $locked->deposit : $terms->refund,
+                'refund_due' => match ($refund) {
+                    true => $locked->deposit,
+                    false => 0,
+                    null => $terms->refund,
+                },
             ]);
 
             return true;
@@ -45,7 +51,7 @@ class CancelBooking
         $booking->refresh();
 
         if ($cancelled) {
-            BookingCancelled::dispatch($booking);
+            BookingCancelled::dispatch($booking, $tellCustomer);
         }
 
         return $cancelled;

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { ChevronLeft, ChevronRight } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import BookingList from '@/components/calendar/BookingList.vue';
 import BookingSheet from '@/components/calendar/BookingSheet.vue';
 import DayGrid from '@/components/calendar/DayGrid.vue';
@@ -76,6 +76,25 @@ function open(booking: CalendarBooking): void {
     selected.value = booking;
     sheetOpen.value = true;
 }
+
+// After an action the bookings reload: show the open one as it is now, or
+// close the panel if it's gone from the calendar (cancelled).
+watch(
+    () => props.bookings,
+    (bookings) => {
+        if (!selected.value) {
+            return;
+        }
+
+        const fresh = bookings.find((b) => b.id === selected.value?.id);
+
+        if (fresh) {
+            selected.value = fresh;
+        } else {
+            sheetOpen.value = false;
+        }
+    },
+);
 
 const range = new Intl.DateTimeFormat(undefined, {
     day: 'numeric',

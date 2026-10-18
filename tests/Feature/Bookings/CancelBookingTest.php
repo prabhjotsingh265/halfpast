@@ -87,7 +87,7 @@ it('keeps the deposit inside the window', function () {
 });
 
 it('lets the business refund in full whenever it cancels', function () {
-    app(CancelBooking::class)->handle($this->booking, 'business', refundInFull: true, now: CarbonImmutable::parse('2026-10-30 08:00', 'UTC'));
+    app(CancelBooking::class)->handle($this->booking, 'business', refund: true, now: CarbonImmutable::parse('2026-10-30 08:00', 'UTC'));
 
     expect($this->booking->fresh()->refund_due)->toBe(2000)
         ->and($this->booking->fresh()->cancelled_by)->toBe('business');

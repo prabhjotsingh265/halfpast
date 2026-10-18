@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Booking\CancellationTerms;
+use App\Actions\Booking\RecordVisit;
 use App\Enums\BookingStatus;
+use App\Enums\BusinessRole;
 use App\Enums\PaymentStatus;
 use App\Models\Booking;
 use App\Models\Payment;
@@ -73,6 +76,12 @@ class CalendarController extends Controller
             ];
         }
 
+        // What this person can do with each booking: the rules in BookingPolicy,
+        // worked out once for the whole calendar rather than per booking.
+        $user = $request->user();
+        $owner = $user !== null && $user->roleIn($business) === BusinessRole::Owner;
+        $mine = $owner || $user === null ? [] : Staff::where('user_id', $user->id)->pluck('id')->all();
+
         $timeOff = TimeOff::where('starts_at', '<', $to->utc())
             ->where('ends_at', '>', $from->utc())
             ->when($person !== null, fn ($query) => $query->where(fn ($query) => $query->whereNull('staff_id')->orWhere('staff_id', $person?->id)))
@@ -96,7 +105,10 @@ class CalendarController extends Controller
                     $day => $weekly[$member->id][CarbonImmutable::parse($day)->isoWeekday()] ?? [],
                 ]),
             ])->values(),
-            'bookings' => $bookings->map(fn (Booking $booking) => self::present($booking))->values(),
+            'bookings' => $bookings->map(fn (Booking $booking) => self::present($booking) + ['can' => [
+                'mark' => ($owner || in_array($booking->staff_id, $mine, true)) && RecordVisit::allowed($booking),
+                'cancel' => $owner && CancellationTerms::for($booking, $business)->allowed,
+            ]])->values(),
             'timeOff' => $timeOff->map(fn (TimeOff $entry) => [
                 'id' => $entry->id,
                 'staff_id' => $entry->staff_id,

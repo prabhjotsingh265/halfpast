@@ -70,7 +70,7 @@ it('keeps the deposit when the customer cancels inside the window (C2)', functio
 });
 
 it('refunds in full when the business cancels, whatever the timing (C4)', function () {
-    app(CancelBooking::class)->handle($this->booking, 'business', refundInFull: true, now: CarbonImmutable::parse('2026-10-30 08:00', 'UTC'));
+    app(CancelBooking::class)->handle($this->booking, 'business', refund: true, now: CarbonImmutable::parse('2026-10-30 08:00', 'UTC'));
 
     expect(Refund::sole()->reason)->toBe('business_cancelled')
         ->and(Refund::sole()->status)->toBe(RefundStatus::Succeeded)

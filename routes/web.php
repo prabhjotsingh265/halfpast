@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BookingActionsController;
 use App\Http\Controllers\Business\BookingRulesController;
 use App\Http\Controllers\Business\PaymentMethodsController;
 use App\Http\Controllers\CalendarController;
@@ -22,6 +23,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('has-business')->group(function () {
         Route::inertia('dashboard', 'Dashboard')->name('dashboard');
         Route::get('calendar', [CalendarController::class, 'index'])->name('calendar');
+        Route::post('bookings/{booking}/complete', [BookingActionsController::class, 'complete'])->name('bookings.complete');
+        Route::post('bookings/{booking}/no-show', [BookingActionsController::class, 'noShow'])->name('bookings.no-show');
+        Route::post('bookings/{booking}/cancel', [BookingActionsController::class, 'cancel'])->middleware('can:manage-business')->name('bookings.cancel');
 
         // Only owners set up what the business sells and who works there.
         Route::middleware('can:manage-business')->group(function () {

@@ -125,7 +125,7 @@ it('refunds straight away when the money arrives after the booking was cancelled
         'gateway_payment_id' => $this->gateway->load($this->order)['payment_id'],
     ]);
 
-    app(CancelBooking::class)->handle($this->booking, 'business', refundInFull: true, now: CarbonImmutable::parse('2026-10-30 08:00', 'UTC'));
+    app(CancelBooking::class)->handle($this->booking, 'business', refund: true, now: CarbonImmutable::parse('2026-10-30 08:00', 'UTC'));
     expect(Refund::count())->toBe(0);
 
     app(SettlePayment::class)->finish($this->payment->fresh());
@@ -145,7 +145,7 @@ it('keeps trying to let the money go if the gateway is down', function () {
     captureWaiting();
     TestGateway::failNext('release');
 
-    app(CancelBooking::class)->handle($this->booking, 'business', refundInFull: true, now: CarbonImmutable::parse('2026-10-26 09:00', 'UTC'));
+    app(CancelBooking::class)->handle($this->booking, 'business', refund: true, now: CarbonImmutable::parse('2026-10-26 09:00', 'UTC'));
 
     // The release failed, so the job will try again; nothing has moved.
     expect(fn () => runRetry())->toThrow(GatewayError::class);

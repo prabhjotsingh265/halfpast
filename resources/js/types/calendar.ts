@@ -25,6 +25,8 @@ export type CalendarBooking = {
         email: string | null;
         phone: string | null;
     } | null;
+    /** What the person looking can do with it. */
+    can: { mark: boolean; cancel: boolean };
 };
 
 export type CalendarView = 'day' | 'week' | 'list';

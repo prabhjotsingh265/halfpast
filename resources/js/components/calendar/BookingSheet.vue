@@ -1,7 +1,17 @@
 <script setup lang="ts">
-import { CalendarClock, Mail, Phone, StickyNote } from '@lucide/vue';
-import { computed } from 'vue';
+import { router } from '@inertiajs/vue3';
+import {
+    CalendarClock,
+    Check,
+    Mail,
+    Phone,
+    StickyNote,
+    UserX,
+} from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Sheet,
     SheetContent,
@@ -15,7 +25,8 @@ import type { CalendarBooking } from '@/types/calendar';
 
 /**
  * Everything about one booking, from the calendar: when, who, what's been
- * paid and what's due on the day.
+ * paid and what's due on the day. Once it has started, it can be marked
+ * completed or a no-show; before then, an owner can cancel it.
  */
 const props = defineProps<{
     booking: CalendarBooking | null;
@@ -48,6 +59,49 @@ const gatewayText: Record<string, string> = {
     razorpay: 'Razorpay',
     test: 'test payment',
 };
+
+const busy = ref(false);
+const confirming = ref(false);
+const refund = ref(true);
+const tellCustomer = ref(true);
+
+// A different booking starts with the cancel form closed and the defaults back.
+watch(
+    () => props.booking?.id,
+    () => {
+        confirming.value = false;
+        refund.value = true;
+        tellCustomer.value = true;
+    },
+);
+
+const firstName = computed(
+    () => props.booking?.customer?.name.split(' ')[0] ?? 'the customer',
+);
+
+function act(
+    name: 'bookings.complete' | 'bookings.no-show' | 'bookings.cancel',
+    data: Record<string, boolean> = {},
+): void {
+    if (!props.booking) {
+        return;
+    }
+
+    router.post(route(name, props.booking.code), data, {
+        preserveScroll: true,
+        preserveState: true,
+        onStart: () => (busy.value = true),
+        onFinish: () => (busy.value = false),
+    });
+}
+
+function cancel(): void {
+    act('bookings.cancel', {
+        refund: refund.value && props.booking?.paid !== null,
+        tell_customer:
+            tellCustomer.value && Boolean(props.booking?.customer?.email),
+    });
+}
 </script>
 
 <template>
@@ -184,6 +238,142 @@ const gatewayText: Record<string, string> = {
                         />
                         {{ booking.notes }}
                     </p>
+
+                    <!-- How it went, once it has started. -->
+                    <section
+                        v-if="booking.can.mark"
+                        class="space-y-2 border-t pt-4"
+                        data-test="visit-actions"
+                    >
+                        <h3 class="text-sm font-semibold">How did it go?</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <Button
+                                :variant="
+                                    booking.status === 'completed'
+                                        ? 'default'
+                                        : 'outline'
+                                "
+                                :aria-pressed="booking.status === 'completed'"
+                                :disabled="busy"
+                                data-test="mark-completed"
+                                @click="
+                                    booking.status !== 'completed' &&
+                                    act('bookings.complete')
+                                "
+                            >
+                                <Check class="size-4" />Completed
+                            </Button>
+                            <Button
+                                :variant="
+                                    booking.status === 'no_show'
+                                        ? 'destructive'
+                                        : 'outline'
+                                "
+                                :aria-pressed="booking.status === 'no_show'"
+                                :disabled="busy"
+                                data-test="mark-no-show"
+                                @click="
+                                    booking.status !== 'no_show' &&
+                                    act('bookings.no-show')
+                                "
+                            >
+                                <UserX class="size-4" />No-show
+                            </Button>
+                        </div>
+                        <p
+                            v-if="booking.status === 'no_show' && booking.paid"
+                            class="text-xs text-muted-foreground"
+                        >
+                            The deposit is kept.
+                        </p>
+                    </section>
+
+                    <section v-if="booking.can.cancel" class="border-t pt-4">
+                        <Button
+                            v-if="!confirming"
+                            variant="outline"
+                            class="text-destructive hover:text-destructive"
+                            data-test="cancel-booking"
+                            @click="confirming = true"
+                        >
+                            Cancel booking
+                        </Button>
+                        <form
+                            v-else
+                            class="space-y-3 rounded-xl border border-destructive/40 p-3"
+                            data-test="cancel-form"
+                            @submit.prevent="cancel"
+                        >
+                            <div>
+                                <p class="text-sm font-semibold">
+                                    Cancel this booking?
+                                </p>
+                                <p class="text-sm text-muted-foreground">
+                                    The time becomes free for someone else.
+                                </p>
+                            </div>
+                            <fieldset
+                                v-if="booking.paid"
+                                class="space-y-1.5 text-sm"
+                            >
+                                <legend class="sr-only">The deposit</legend>
+                                <label class="flex items-center gap-2">
+                                    <input
+                                        v-model="refund"
+                                        type="radio"
+                                        name="refund"
+                                        :value="true"
+                                        class="size-4 accent-sun-deep"
+                                        data-test="refund-yes"
+                                    />
+                                    Refund the
+                                    {{
+                                        formatMoney(
+                                            booking.paid.amount,
+                                            booking.currency,
+                                        )
+                                    }}
+                                    deposit
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input
+                                        v-model="refund"
+                                        type="radio"
+                                        name="refund"
+                                        :value="false"
+                                        class="size-4 accent-sun-deep"
+                                        data-test="refund-no"
+                                    />
+                                    Keep the deposit
+                                </label>
+                            </fieldset>
+                            <label
+                                v-if="booking.customer?.email"
+                                class="flex items-center gap-2 text-sm"
+                            >
+                                <Checkbox
+                                    v-model="tellCustomer"
+                                    data-test="tell-customer"
+                                />
+                                Email {{ firstName }} to say it's cancelled
+                            </label>
+                            <div class="flex justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    @click="confirming = false"
+                                    >Keep it</Button
+                                >
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    :disabled="busy"
+                                    data-test="confirm-cancel"
+                                    >Cancel booking</Button
+                                >
+                            </div>
+                        </form>
+                    </section>
                 </div>
             </template>
         </SheetContent>

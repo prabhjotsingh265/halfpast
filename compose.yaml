@@ -3,6 +3,8 @@ name: halfpast
 # Shared by every container that runs the Laravel code.
 x-app: &app
     image: halfpast-app:dev
+    # Back up after a crash, or when Docker starts again after a reboot.
+    restart: unless-stopped
     build:
         context: .
         target: dev
@@ -73,6 +75,7 @@ services:
 
     postgres:
         image: postgres:17-alpine
+        restart: unless-stopped
         environment:
             POSTGRES_DB: ${DB_DATABASE:-halfpast}
             POSTGRES_USER: ${DB_USERNAME:-halfpast}
@@ -94,6 +97,7 @@ services:
 
     redis:
         image: redis:8.2-alpine
+        restart: unless-stopped
         volumes:
             - redis:/data
         healthcheck:
@@ -104,6 +108,7 @@ services:
 
     mailpit:
         image: axllent/mailpit:v1.31
+        restart: unless-stopped
         ports:
             - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
 

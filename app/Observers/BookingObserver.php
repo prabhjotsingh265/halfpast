@@ -2,13 +2,16 @@
 
 namespace App\Observers;
 
+use App\Enums\BookingStatus;
 use App\Events\CalendarChanged;
 use App\Models\Booking;
+use App\Models\BookingEvent;
 use Carbon\CarbonImmutable;
 
 /**
- * Tells open calendars when a booking appears, moves, or changes in a way
- * they show: its status, times, person, customer or notes.
+ * Keeps a booking's history (made, confirmed, marked, cancelled, and by
+ * whom), and tells open calendars when it appears, moves, or changes in a
+ * way they show: its status, times, person, customer or notes.
  */
 class BookingObserver
 {
@@ -16,6 +19,8 @@ class BookingObserver
 
     public function created(Booking $booking): void
     {
+        BookingEvent::record($booking, 'created', ['source' => $booking->source, 'status' => $booking->status->value]);
+
         CalendarChanged::between($booking->business_id, $booking->starts_at, $booking->blocked_until);
     }
 
@@ -23,6 +28,12 @@ class BookingObserver
     // whole life, so every later save would look like a new booking.
     public function updated(Booking $booking): void
     {
+        if ($booking->wasChanged('status')) {
+            BookingEvent::record($booking, $booking->status->value, $booking->status === BookingStatus::Cancelled
+                ? ['by' => $booking->cancelled_by, 'refund_due' => $booking->refund_due]
+                : []);
+        }
+
         if (! $booking->wasChanged(self::SHOWN)) {
             return;
         }

@@ -76,6 +76,66 @@ watch(
     },
 );
 
+// What has happened to the booking, fetched when the panel opens and again
+// after anything changes it.
+type HistoryItem = {
+    at: string;
+    text: string;
+    tone: 'neutral' | 'good' | 'bad';
+};
+
+const history = ref<HistoryItem[] | null>(null);
+let historyRequest: AbortController | null = null;
+
+watch(
+    () =>
+        [
+            open.value,
+            props.booking?.id,
+            props.booking?.status,
+            props.booking?.paid?.amount,
+        ] as const,
+    async ([isOpen, id]) => {
+        historyRequest?.abort();
+
+        if (!isOpen || !props.booking || id === undefined) {
+            return;
+        }
+
+        history.value = null;
+        historyRequest = new AbortController();
+
+        try {
+            const response = await fetch(
+                route('bookings.history', props.booking.code),
+                {
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    signal: historyRequest.signal,
+                },
+            );
+            history.value = response.ok ? await response.json() : [];
+        } catch {
+            // Replaced by a newer request, or offline: the details still show.
+        }
+    },
+    { immediate: true },
+);
+
+const historyTime = computed(
+    () =>
+        new Intl.DateTimeFormat(undefined, {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short',
+            hour: 'numeric',
+            minute: '2-digit',
+            timeZone: props.timezone,
+        }),
+);
+
 const firstName = computed(
     () => props.booking?.customer?.name.split(' ')[0] ?? 'the customer',
 );
@@ -374,6 +434,46 @@ function cancel(): void {
                                 >
                             </div>
                         </form>
+                    </section>
+
+                    <!-- What has happened to it so far. -->
+                    <section class="border-t pt-4" data-test="booking-history">
+                        <h3 class="text-sm font-semibold">History</h3>
+                        <p
+                            v-if="history === null"
+                            class="mt-2 text-sm text-muted-foreground"
+                        >
+                            Loading…
+                        </p>
+                        <ol v-else class="mt-3 space-y-3">
+                            <li
+                                v-for="(item, index) in history"
+                                :key="index"
+                                class="relative flex gap-3 text-sm"
+                            >
+                                <span
+                                    class="mt-1.5 size-2 shrink-0 rounded-full"
+                                    :class="{
+                                        'bg-success': item.tone === 'good',
+                                        'bg-destructive': item.tone === 'bad',
+                                        'bg-muted-foreground/50':
+                                            item.tone === 'neutral',
+                                    }"
+                                    aria-hidden="true"
+                                />
+                                <span class="min-w-0">
+                                    <span class="block">{{ item.text }}</span>
+                                    <span
+                                        class="block text-xs text-muted-foreground tabular-nums"
+                                        >{{
+                                            historyTime.format(
+                                                new Date(item.at),
+                                            )
+                                        }}</span
+                                    >
+                                </span>
+                            </li>
+                        </ol>
                     </section>
                 </div>
             </template>

@@ -172,6 +172,14 @@ class Booking extends Model
     }
 
     /**
+     * @return HasMany<BookingEvent, $this>
+     */
+    public function events(): HasMany
+    {
+        return $this->hasMany(BookingEvent::class);
+    }
+
+    /**
      * @return HasMany<Payment, $this>
      */
     public function payments(): HasMany

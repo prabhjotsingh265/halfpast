@@ -32,6 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('bookings/times', [NewBookingController::class, 'times'])->name('bookings.times');
         Route::get('customers/search', [NewBookingController::class, 'customers'])->middleware('throttle:120,1')->name('customers.search');
         Route::post('bookings', [NewBookingController::class, 'store'])->name('bookings.store');
+        Route::get('bookings/{booking}/history', [BookingActionsController::class, 'history'])->name('bookings.history');
         Route::post('bookings/{booking}/complete', [BookingActionsController::class, 'complete'])->name('bookings.complete');
         Route::post('bookings/{booking}/no-show', [BookingActionsController::class, 'noShow'])->name('bookings.no-show');
         Route::post('bookings/{booking}/cancel', [BookingActionsController::class, 'cancel'])->middleware('can:manage-business')->name('bookings.cancel');

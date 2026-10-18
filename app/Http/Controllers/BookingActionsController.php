@@ -7,17 +7,25 @@ use App\Actions\Booking\RecordVisit;
 use App\Enums\BookingStatus;
 use App\Mail\Money;
 use App\Models\Booking;
+use App\Support\Calendar\BookingHistory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 /**
- * What the business does with a booking from its calendar: say how the
- * appointment went, or cancel it.
+ * What the business does with a booking from its calendar: see what has
+ * happened to it, say how the appointment went, or cancel it.
  */
 class BookingActionsController extends Controller
 {
+    /** What has happened to the booking, for its details panel. */
+    public function history(Booking $booking): JsonResponse
+    {
+        return response()->json(BookingHistory::for($booking));
+    }
+
     public function complete(Booking $booking, RecordVisit $visits): RedirectResponse
     {
         return $this->record($booking, BookingStatus::Completed, $visits);

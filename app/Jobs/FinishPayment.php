@@ -9,6 +9,7 @@ use App\Enums\PaymentStatus;
 use App\Events\CalendarChanged;
 use App\Mail\PaymentReturnedMail;
 use App\Models\Booking;
+use App\Models\BookingEvent;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Payment;
@@ -85,6 +86,7 @@ class FinishPayment implements ShouldQueue
 
         // Cancelled with a plain update, which the booking's observer doesn't see.
         if ($cancelled === 1) {
+            BookingEvent::record($booking, BookingStatus::Cancelled->value, ['by' => 'system', 'refund_due' => 0]);
             CalendarChanged::between($booking->business_id, $booking->starts_at, $booking->blocked_until);
         }
 

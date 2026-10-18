@@ -28,11 +28,12 @@ setup: ## First run on a new machine: build, install, migrate, add the demo salo
 	@echo "Demo booking page:     http://localhost:$${APP_PORT:-8000}/kesar-beauty-lounge"
 	@echo "Emails are caught at   http://localhost:$${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}"
 
-up: ## Start every container
+up: ## Start every container (and Stripe's webhook forwarder when Stripe keys are in .env)
 	$(COMPOSE) up -d
+	@if grep -qE '^STRIPE_SECRET=.+' .env 2>/dev/null; then $(MAKE) --no-print-directory stripe-webhooks; fi
 
 down: ## Stop every container
-	$(COMPOSE) down
+	$(COMPOSE) --profile stripe down
 
 restart: down up ## Stop, then start again
 
@@ -67,13 +68,15 @@ lint: ## Check code style and static analysis
 	$(RUN) vendor/bin/pint --test
 	$(RUN) vendor/bin/phpstan analyse --memory-limit=1G
 
-stripe-webhooks: ## Forward Stripe test webhooks to the app (saves the signing secret in .env)
+stripe-webhooks: ## Forward Stripe test webhooks to the app (run by make up when Stripe keys are set)
 	@secret=$$($(COMPOSE) --profile stripe run --rm --no-deps stripe listen --print-secret 2>/dev/null | tr -d '\r' | tail -1); \
 	case "$$secret" in whsec_*) ;; *) echo "Couldn't get a webhook secret from Stripe. Is STRIPE_SECRET set in .env?"; exit 1;; esac; \
+	if grep -q "^STRIPE_WEBHOOK_SECRET=$$secret$$" .env; then exit 0; fi; \
 	if grep -q '^STRIPE_WEBHOOK_SECRET=' .env; then \
 		sed -i.bak "s|^STRIPE_WEBHOOK_SECRET=.*|STRIPE_WEBHOOK_SECRET=$$secret|" .env && rm -f .env.bak; \
-	else echo "STRIPE_WEBHOOK_SECRET=$$secret" >> .env; fi
-	$(RUN) php artisan config:clear
+	else echo "STRIPE_WEBHOOK_SECRET=$$secret" >> .env; fi; \
+	echo "Saved a new Stripe webhook signing secret in .env."; \
+	$(RUN) php artisan config:clear >/dev/null; \
 	$(COMPOSE) restart queue scheduler
-	$(COMPOSE) --profile stripe up -d stripe
-	@echo "Stripe test webhooks now reach http://localhost:$${APP_PORT:-8000}/webhooks/stripe"
+	@$(COMPOSE) --profile stripe up -d stripe
+	@echo "Stripe test webhooks reach http://localhost:$${APP_PORT:-8000}/webhooks/stripe"

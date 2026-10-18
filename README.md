@@ -40,7 +40,7 @@ To use the real gateways in test mode, add their **test** keys to `.env`. Never 
 
 Then switch them on under **Business settings → Payment methods**.
 
-- **Stripe webhooks, locally:** `make stripe-webhooks` starts Stripe's CLI, saves the signing secret in `.env`, and forwards test webhooks to the app.
+- **Stripe webhooks, locally:** `make up` starts Stripe's CLI by itself when the Stripe keys are in `.env`. It saves the signing secret and forwards test webhooks to the app. `make stripe-webhooks` does the same on its own.
 - **Razorpay webhooks** need a public address, so locally the app settles Razorpay payments when the customer returns, and a check runs every minute for any it hasn't heard back about.
 
 Test details:

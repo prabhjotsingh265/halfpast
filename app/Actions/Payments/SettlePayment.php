@@ -46,7 +46,7 @@ use RuntimeException;
  */
 class SettlePayment
 {
-    public function __construct(private Gateways $gateways, private RefundPayment $refunds) {}
+    public function __construct(private Gateways $gateways, private RefundPayment $refunds, private RefundCancellation $refundCancellation) {}
 
     /**
      * @throws GatewayError When the gateway can't be asked how things stand. Try again later.
@@ -181,6 +181,20 @@ class SettlePayment
      */
     private function takeMoney(Payment $payment): Payment
     {
+        $booking = Booking::withoutGlobalScopes()->findOrFail($payment->booking_id);
+
+        // Cancelled before the money was taken, with all of it due back:
+        // let the authorisation go rather than take the money and refund it.
+        if ($payment->captured_at === null && $booking->status === BookingStatus::Cancelled && $booking->refund_due >= $payment->amount) {
+            $this->gateways->get($payment->gateway)->release($payment);
+
+            Payment::withoutGlobalScopes()->whereKey($payment->id)
+                ->where('status', PaymentStatus::Authorized)
+                ->update(['status' => PaymentStatus::Released, 'released_at' => now(), 'release_reason' => 'booking_cancelled']);
+
+            return $payment->refresh();
+        }
+
         $capturedId = $payment->gateway_payment_id;
 
         if ($payment->captured_at === null) {
@@ -201,7 +215,15 @@ class SettlePayment
 
         if ($won === 1) {
             self::recordDeposit($payment);
-            BookingConfirmed::dispatch(Booking::withoutGlobalScopes()->findOrFail($payment->booking_id));
+            $booking->refresh();
+
+            if ($booking->status === BookingStatus::Cancelled) {
+                // Cancelled while the money was on its way. Now it's here,
+                // whatever the cancellation said is due back can go back.
+                $this->refundCancellation->handle($booking);
+            } else {
+                BookingConfirmed::dispatch($booking);
+            }
         }
 
         return $payment;

@@ -9,6 +9,7 @@ use App\Models\Business;
 use App\Models\FailedJob;
 use App\Models\Payment;
 use App\Models\PaymentEvent;
+use App\Support\Heartbeat;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -25,6 +26,7 @@ class PlatformOverview extends StatsOverviewWidget
         $paid = Payment::withoutGlobalScopes()->where('captured_at', '>=', now()->subDays(7))->whereIn('status', [PaymentStatus::Captured, PaymentStatus::PartiallyRefunded, PaymentStatus::Refunded]);
         $failed = FailedJob::count();
         $waiting = PaymentEvent::whereNull('processed_at')->where('created_at', '<', now()->subMinutes(5))->count();
+        $beat = Heartbeat::last();
 
         return [
             Stat::make('Businesses', (string) $real)->description($demo > 0 ? "and {$demo} demo" : 'none are demos'),
@@ -33,6 +35,9 @@ class PlatformOverview extends StatsOverviewWidget
             Stat::make('Failed jobs', (string) $failed)
                 ->description($failed > 0 ? 'need a look' : 'all clear')
                 ->color($failed > 0 ? 'danger' : 'success'),
+            Stat::make('Scheduler', $beat === null ? 'Never run' : $beat->diffForHumans())
+                ->description(Heartbeat::healthy() ? 'running every minute' : 'has stopped: holds, reminders and payment checks are waiting')
+                ->color(Heartbeat::healthy() ? 'success' : 'danger'),
             Stat::make('Webhooks waiting', (string) $waiting)
                 ->description($waiting > 0 ? 'over 5 minutes old' : 'all dealt with')
                 ->color($waiting > 0 ? 'warning' : 'success'),

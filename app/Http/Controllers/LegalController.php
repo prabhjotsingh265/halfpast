@@ -30,6 +30,7 @@ class LegalController extends Controller
                 'title' => $title,
                 'description' => $description,
                 'url' => route($route),
+                'image' => route('share.halfpast'),
                 'schema' => ['@context' => 'https://schema.org', '@type' => 'WebPage', 'name' => $title, 'url' => route($route)],
             ],
         ]);

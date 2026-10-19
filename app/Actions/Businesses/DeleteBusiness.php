@@ -38,6 +38,7 @@ class DeleteBusiness
 
         Storage::disk('public')->deleteDirectory("staff/{$business->id}");
         Storage::disk('public')->deleteDirectory("logos/{$business->id}");
+        Storage::disk('public')->deleteDirectory("share/{$business->id}");
 
         // Services, staff, customers, bookings, payments and the rest go with it.
         $business->delete();

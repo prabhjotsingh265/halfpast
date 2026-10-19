@@ -46,7 +46,16 @@
             <meta property="og:title" content="{{ $seo['title'] }}">
             <meta property="og:description" content="{{ $seo['description'] }}">
             <meta property="og:url" content="{{ $seo['url'] }}">
-            <meta name="twitter:card" content="summary">
+            @isset($seo['image'])
+                <meta property="og:image" content="{{ $seo['image'] }}">
+                <meta property="og:image:width" content="1200">
+                <meta property="og:image:height" content="630">
+                <meta property="og:image:alt" content="{{ $seo['title'] }}">
+                <meta name="twitter:card" content="summary_large_image">
+                <meta name="twitter:image" content="{{ $seo['image'] }}">
+            @else
+                <meta name="twitter:card" content="summary">
+            @endisset
             <script type="application/ld+json" nonce="{{ Vite::cspNonce() }}">{!! json_encode($seo['schema'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
         @elseif (! str_starts_with($page['component'], 'marketing/'))
             {{-- The dashboard, checkout and personal booking links stay out of search results. --}}

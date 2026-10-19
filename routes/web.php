@@ -16,6 +16,7 @@ use App\Http\Controllers\LegalController;
 use App\Http\Controllers\NewBookingController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\ShareImageController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffPhotoController;
@@ -28,6 +29,7 @@ Route::get('/', fn () => Inertia::render('marketing/Home', [
         'title' => 'Booking pages that take deposits and never double-book',
         'description' => 'Halfpast gives salons, clinics and tutors a booking page that takes deposits, sends reminders and never double-books.',
         'url' => route('home'),
+        'image' => route('share.halfpast'),
         'schema' => ['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => 'Halfpast', 'url' => route('home')],
     ],
 ]))->name('home');
@@ -35,6 +37,7 @@ Route::get('/', fn () => Inertia::render('marketing/Home', [
 Route::get('privacy', [LegalController::class, 'privacy'])->name('privacy');
 Route::get('terms', [LegalController::class, 'terms'])->name('terms');
 
+Route::get('share.png', [ShareImageController::class, 'halfpast'])->name('share.halfpast');
 Route::get('sitemap.xml', [SitemapController::class, 'sitemap'])->name('sitemap');
 Route::get('robots.txt', [SitemapController::class, 'robots'])->name('robots');
 

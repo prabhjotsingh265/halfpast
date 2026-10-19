@@ -5,6 +5,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HoldController;
 use App\Http\Controllers\ManageBookingController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ShareImageController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,6 +19,7 @@ Route::middleware('business-from-address')
     ->where(['business' => '[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])'])
     ->group(function () {
         Route::get('/', [BookingPageController::class, 'show'])->name('booking.show');
+        Route::get('share.png', [ShareImageController::class, 'business'])->name('booking.share');
 
         // Generous for a person, tight enough that a script can't hold a whole day.
         Route::post('hold', [HoldController::class, 'store'])->middleware('throttle:20,1')->name('booking.hold');

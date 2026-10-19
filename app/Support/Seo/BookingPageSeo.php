@@ -7,6 +7,7 @@ use App\Models\Business;
 use App\Models\Service;
 use App\Models\Staff;
 use App\Models\WorkingHour;
+use App\Support\ShareImage;
 use Illuminate\Support\Collection;
 
 /**
@@ -21,7 +22,7 @@ final class BookingPageSeo
 
     /**
      * @param  Collection<int, Service>  $services  What can be booked online.
-     * @return array{title: string, description: string, url: string, schema: array<string, mixed>}
+     * @return array{title: string, description: string, url: string, image: string, schema: array<string, mixed>}
      */
     public static function for(Business $business, Collection $services): array
     {
@@ -69,6 +70,8 @@ final class BookingPageSeo
             'title' => "Book with {$business->name}",
             'description' => mb_strimwidth($description, 0, 160, '…'),
             'url' => $url,
+            // The fingerprint changes with the picture, so previews fetch the new one.
+            'image' => route('booking.share', ['business' => $business->slug, 'v' => ShareImage::key($business)]),
             'schema' => $schema,
         ];
     }

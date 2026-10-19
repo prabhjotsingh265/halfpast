@@ -74,7 +74,9 @@ make setup
 
 ### The demo
 
-The login page has one-click logins into three demo businesses, each with a few weeks of bookings, payments and customers around today:
+![The home page: "Bookings that show up", over a 24-hour dial set to the visitor's own time](docs/screenshots/home.webp)
+
+The home page tells a day at a salon in one scroll, with two customers going for the same time. Then try it yourself: the login page has one-click logins into three demo businesses, each with a few weeks of bookings, payments and customers around today:
 
 | Business            | Where, in         | Booking page           | Logins                                                      |
 | ------------------- | ----------------- | ---------------------- | ----------------------------------------------------------- |

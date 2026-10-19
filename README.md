@@ -1,8 +1,56 @@
 # Halfpast
 
-Booking pages for small businesses that can't double-book, even when two customers click the same slot in the same second.
+Booking pages for small businesses (salons, barbers, clinics, tutors) that take deposits, send reminders and can't double-book, even when two customers tap the same time in the same second.
 
-Work in progress.
+![A booking page: the business's day as light across the top, its week of opening hours, services with duration dials, and free times tinted by the hour](docs/screenshots/booking.webp)
+
+A business signs up, adds its services, team and hours, and gets a page at its own address (`/fade-and-co`). Customers pick a service, a person (or anyone free), a day and a time; the time is held while they pay a deposit; then they get a confirmation with a calendar file and reminders 24 and 2 hours before. The business runs its day from a live calendar.
+
+It's a portfolio project, so payments run in **test mode**: no real money moves. Three demo businesses come with it, with one-click logins (see [The demo](#the-demo)).
+
+## What it does
+
+**For a business**
+
+- A booking page with its logo, description, address, a live "open now" and its week's opening hours.
+- Services with prices and deposits (none, fixed or a percentage), and who offers each one.
+- The team's weekly hours (split shifts and breaks included), time off and whole-business closures.
+- Booking rules: notice needed, how far ahead, slot spacing, how long a picked time is held, and the cancellation window.
+- A day, week and list calendar that updates live as bookings arrive, plus manual bookings and blocked-out time.
+- Booking details with a full history; mark completed or no-show, or cancel with or without a refund.
+- Customers with their history and private notes, and earnings per payment provider.
+- Stripe, Razorpay and a built-in test gateway; download everything as spreadsheets, or delete it all.
+
+**For a customer**
+
+- Times in their own time zone, with the business's named; the picked time held with a visible countdown.
+- A deposit taken on the payment provider's own page; a confirmation email with a calendar file and a link to view or cancel.
+- Cancelling outside the window refunds the deposit automatically; inside it, the business keeps it, and the page says which before they confirm.
+
+**For whoever runs it**
+
+- An admin of every business, booking and payment, the webhook log and failed jobs; Horizon for the queue and Pulse for slow requests, slow queries and errors; an email when a job fails for good.
+
+<p>
+<img src="docs/screenshots/calendar.webp" width="64%" alt="The owner's live calendar: a column per person, bookings tinted by the hour">
+<img src="docs/screenshots/phone.webp" width="34%" alt="A booking page on a phone">
+</p>
+
+## How it's built
+
+- **No double bookings, guaranteed by the database.** A booking takes a range of someone's time, and a PostgreSQL exclusion constraint refuses any overlap. A held time is a booking that lapses. When several customers hold the same time at once, an advisory lock on that person's diary queues them, so exactly one gets it and the rest are told "just taken". A test forks 20 processes that all hold the same slot at the same moment. See [`HoldTime`](app/Actions/Booking/HoldTime.php) and [`HoldRaceTest`](tests/Concurrency/HoldRaceTest.php).
+- **Time zones and daylight saving.** Weekly hours are local clock times; bookings are real moments in UTC. The slot finder in [`app/Availability`](app/Availability) turns one into the other date by date, and the tests cover the nights the clocks change (when 01:00 happens twice) and half-hour offsets like India's.
+- **One database, many businesses.** Every business-owned table carries `business_id` behind a global scope that's set before route model binding, and the tests ask for other businesses' records and expect a 404.
+- **Payments behind one interface.** Stripe, Razorpay and the test gateway share one contract. Webhooks are verified, stored, and processed once, however many times they arrive; a check every minute settles any payment nobody heard back about; refunds retry; every payment and refund goes into a ledger per business. See [`app/Payments`](app/Payments).
+- **Server rendering without hydration mismatches.** Public pages arrive as HTML. The server can't know a visitor's language, time zone or clock, so a page starts from the business's zone and a fixed locale (the home page's clock from half past three), then switches to the visitor's own once it's running. See [`hydration.ts`](resources/js/lib/hydration.ts).
+- **A design system computed from the hour.** Every time slot is tinted by the hour it starts at, blended in OKLCH between six fixed colours, from dawn rose to evening violet. The same ramp is in TypeScript and PHP, so link previews, error pages and emails are drawn from it too. Each booking page's share picture is the business's working day in those colours.
+- **Live updates.** Calendars listen on a private Reverb channel; a booking change broadcasts once its transaction commits.
+- **Ready for production.**
+    - Security: a content security policy with nonces, signed links for customers, two-factor sign-in and rate limits.
+    - Running it: Horizon, Pulse, a scheduler heartbeat behind `/up`, daily logs, containers that restart themselves, and designed error and maintenance pages.
+- **Tested.** Around 585 Pest tests, including the concurrency race, plus PHPStan at level 7, vue-tsc, ESLint and Prettier. CI runs all of them, and audits the dependencies, on every push.
+
+<img src="docs/screenshots/share.webp" width="60%" alt="A booking page's link preview: its name and description over the colours of its working day">
 
 ## Running it locally
 

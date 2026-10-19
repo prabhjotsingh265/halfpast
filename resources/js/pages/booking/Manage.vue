@@ -6,6 +6,8 @@ import {
     CircleX,
     Clock3,
     Mail,
+    MapPin,
+    Phone,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import BookingHeader from '@/components/booking/BookingHeader.vue';
@@ -269,6 +271,36 @@ const headline = computed(
                         </dd>
                     </div>
                 </dl>
+
+                <div
+                    v-if="business.address || business.phone"
+                    class="mt-4 space-y-2 border-t pt-4 text-sm"
+                    data-test="where"
+                >
+                    <a
+                        v-if="business.address"
+                        :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.address)}`"
+                        target="_blank"
+                        rel="noopener"
+                        class="flex gap-2 underline-offset-4 hover:underline"
+                    >
+                        <MapPin class="mt-0.5 size-4 shrink-0" />
+                        <span
+                            >{{ business.address }}
+                            <span class="text-muted-foreground"
+                                >· Directions</span
+                            ></span
+                        >
+                    </a>
+                    <a
+                        v-if="business.phone"
+                        :href="`tel:${business.phone.replace(/[^0-9+]/g, '')}`"
+                        class="flex gap-2 underline-offset-4 hover:underline"
+                    >
+                        <Phone class="mt-0.5 size-4 shrink-0" />
+                        {{ business.phone }}
+                    </a>
+                </div>
 
                 <p
                     v-if="

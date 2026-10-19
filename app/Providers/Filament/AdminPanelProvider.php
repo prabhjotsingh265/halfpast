@@ -35,6 +35,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             // No login page of its own: admins sign in through the app, two-factor and all.
             ->brandName('Halfpast admin')
+            ->favicon(asset('favicon.svg'))
             ->colors([
                 'primary' => Color::hex('#d97a1d'),
             ])

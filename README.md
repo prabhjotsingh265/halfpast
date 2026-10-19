@@ -67,6 +67,10 @@ Test details:
 - **Stripe:** card `4242 4242 4242 4242`, any future date, any CVC.
 - **Razorpay:** Netbanking, any bank, then **Success** on the test bank page.
 
+### Maintenance mode
+
+`php artisan down --render="errors::503" --retry=60` shows the designed "Back in a few minutes" page while you work; `php artisan up` brings the site back. Every error page (404, 403, 419, 429, 500, 503) is self-contained, with no scripts or built assets, so it still renders when the app is what's broken.
+
 ## Everyday commands
 
 | Command                       | What it does                                  |

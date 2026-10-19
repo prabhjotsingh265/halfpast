@@ -58,6 +58,20 @@ import HalfpastMark from '@/components/brand/HalfpastMark.vue';
                             Built by Prabhjot Singh
                         </a>
                     </li>
+                    <li>
+                        <Link
+                            :href="route('privacy')"
+                            class="hover:text-foreground"
+                            >Privacy</Link
+                        >
+                    </li>
+                    <li>
+                        <Link
+                            :href="route('terms')"
+                            class="hover:text-foreground"
+                            >Terms</Link
+                        >
+                    </li>
                 </ul>
             </nav>
         </div>

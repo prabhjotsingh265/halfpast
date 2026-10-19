@@ -100,6 +100,21 @@ defineOptions({
             </Button>
         </div>
 
+        <p class="text-center text-xs text-muted-foreground">
+            By creating an account you agree to the
+            <TextLink
+                :href="route('terms')"
+                class="underline underline-offset-4"
+                >terms</TextLink
+            >
+            and the
+            <TextLink
+                :href="route('privacy')"
+                class="underline underline-offset-4"
+                >privacy policy</TextLink
+            >.
+        </p>
+
         <div class="text-center text-sm text-muted-foreground">
             Already have an account?
             <TextLink

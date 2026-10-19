@@ -7,8 +7,9 @@ use App\Models\Service;
 use Illuminate\Http\Response;
 
 /**
- * The pages search engines are welcome to: the home page, and the booking
- * page of every business with something to book. Plus robots.txt, which
+ * The pages search engines are welcome to: the home page, the privacy
+ * policy and terms, and the booking page of every business with something
+ * to book. Plus robots.txt, which
  * keeps them out of everything else and points to the sitemap.
  */
 class SitemapController extends Controller
@@ -20,7 +21,11 @@ class SitemapController extends Controller
             ->whereHas('staff', fn ($query) => $query->where('staff.is_active', true))
             ->select('business_id');
 
-        $pages = [['loc' => route('home'), 'lastmod' => null]];
+        $pages = [
+            ['loc' => route('home'), 'lastmod' => null],
+            ['loc' => route('privacy'), 'lastmod' => config('halfpast.legal_updated')],
+            ['loc' => route('terms'), 'lastmod' => config('halfpast.legal_updated')],
+        ];
 
         foreach (Business::whereIn('id', $bookable)->orderBy('id')->get(['slug', 'updated_at']) as $business) {
             $pages[] = ['loc' => route('booking.show', ['business' => $business->slug]), 'lastmod' => $business->updated_at?->toDateString()];
@@ -37,7 +42,7 @@ class SitemapController extends Controller
 
     public function robots(): Response
     {
-        $private = ['/dashboard', '/calendar', '/customers', '/services', '/staff', '/time-off', '/earnings', '/business', '/settings', '/admin', '/start', '/bookings'];
+        $private = ['/dashboard', '/calendar', '/customers', '/services', '/staff', '/time-off', '/earnings', '/business', '/settings', '/admin', '/horizon', '/pulse', '/start', '/bookings'];
 
         // Exact paths and their sub-pages only: a plain prefix like /staff
         // would also hide a booking page such as /staffing-agency.

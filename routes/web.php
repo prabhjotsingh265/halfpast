@@ -10,6 +10,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DemoLoginController;
 use App\Http\Controllers\EarningsController;
+use App\Http\Controllers\LegalController;
 use App\Http\Controllers\NewBookingController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ServiceController;
@@ -28,6 +29,9 @@ Route::get('/', fn () => Inertia::render('marketing/Home', [
         'schema' => ['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => 'Halfpast', 'url' => route('home')],
     ],
 ]))->name('home');
+
+Route::get('privacy', [LegalController::class, 'privacy'])->name('privacy');
+Route::get('terms', [LegalController::class, 'terms'])->name('terms');
 
 Route::get('sitemap.xml', [SitemapController::class, 'sitemap'])->name('sitemap');
 Route::get('robots.txt', [SitemapController::class, 'robots'])->name('robots');

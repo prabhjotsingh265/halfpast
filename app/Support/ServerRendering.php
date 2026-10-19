@@ -6,8 +6,8 @@ use Illuminate\Http\Request;
 
 /**
  * Which pages are rendered on the server: the booking pages, which anyone can
- * land on from a search, a shared link or an email, so they arrive ready to
- * read before any JavaScript runs. The dashboard is only reached signed in,
+ * land on from a search, a shared link or an email, and the privacy policy
+ * and terms. They arrive ready to read before any JavaScript runs. The dashboard is only reached signed in,
  * and renders in the browser as before.
  *
  * The home page isn't here yet: its hero follows the visitor's own clock,
@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
  */
 class ServerRendering
 {
-    public const ROUTES = ['booking.show', 'booking.checkout', 'booking.manage'];
+    public const ROUTES = ['booking.show', 'booking.checkout', 'booking.manage', 'privacy', 'terms'];
 
     /**
      * True for a full page load of one of those pages. Inertia's own visits

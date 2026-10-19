@@ -624,6 +624,10 @@ watch(
             <Link :href="route('home')" class="font-medium text-foreground"
                 >Halfpast</Link
             >
+            <span aria-hidden="true">·</span>
+            <Link :href="route('privacy')" class="hover:text-foreground"
+                >Privacy</Link
+            >
         </footer>
     </div>
 </template>

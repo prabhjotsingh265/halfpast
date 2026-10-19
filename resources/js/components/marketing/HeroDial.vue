@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { daylight } from '@/lib/daylight';
-import { hourNow } from '@/lib/time';
+import { HALF_PAST_THREE, hourNow } from '@/lib/time';
 
 /**
  * A 24-hour clock face drawn from the visitor's own time: the part of today
@@ -12,16 +12,44 @@ import { hourNow } from '@/lib/time';
 const SIZE = 600;
 const C = SIZE / 2;
 
-const hour = ref(hourNow());
+// Half past three until the page is running, then wound round to the
+// visitor's own time; the server can't know it.
+const hour = ref(HALF_PAST_THREE);
 const drawn = ref(false);
 const isDark = ref(false);
 
 const angle = (h: number) => (h / 24) * 360 - 90;
 
+// Rounded, so the server's maths and the browser's agree to the last digit.
+const round = (n: number) => Math.round(n * 100) / 100;
+
 function point(h: number, r: number): [number, number] {
     const a = (angle(h) * Math.PI) / 180;
 
-    return [C + r * Math.cos(a), C + r * Math.sin(a)];
+    return [round(C + r * Math.cos(a)), round(C + r * Math.sin(a))];
+}
+
+/** Turns the hand to an hour over most of a second, easing out. */
+function windTo(target: number): void {
+    const from = hour.value;
+    const started = performance.now();
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        hour.value = target;
+
+        return;
+    }
+
+    const step = (now: number) => {
+        const t = Math.min(1, (now - started) / 900);
+        hour.value = from + (target - from) * (1 - Math.pow(1 - t, 3));
+
+        if (t < 1) {
+            requestAnimationFrame(step);
+        }
+    };
+
+    requestAnimationFrame(step);
 }
 
 function arc(from: number, to: number, r: number): string {
@@ -66,6 +94,7 @@ onMounted(async () => {
     isDark.value = document.documentElement.classList.contains('dark');
     await nextTick();
     requestAnimationFrame(() => (drawn.value = true));
+    windTo(hourNow());
     timer = window.setInterval(() => (hour.value = hourNow()), 30_000);
 });
 

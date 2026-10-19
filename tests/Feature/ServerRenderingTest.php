@@ -36,7 +36,19 @@ it('renders booking pages on the server, with the routes their links need', func
         && isset($request['props']['ziggy']['routes']['booking.hold']));
 });
 
-it('leaves the dashboard and the home page to the browser, without the route list', function () {
+// One request each: Inertia keeps a render for the rest of the request, and
+// a test's requests share one app (each real request gets a fresh one).
+it('renders the home page and the small print on the server too', function (string $path, string $component) {
+    fakeRenderer();
+
+    $this->get($path)->assertOk()->assertSee("Rendered: {$component}", false);
+})->with([
+    'home' => ['/', 'marketing/Home'],
+    'privacy' => ['/privacy', 'marketing/Privacy'],
+    'terms' => ['/terms', 'marketing/Terms'],
+]);
+
+it('leaves the dashboard to the browser, without the route list', function () {
     fakeRenderer();
 
     $owner = User::factory()->create();
@@ -45,9 +57,6 @@ it('leaves the dashboard and the home page to the browser, without the route lis
     $this->actingAs($owner)->get(route('dashboard'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->component('Dashboard')->missing('ziggy'));
-    $this->get('/')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->component('marketing/Home')->missing('ziggy'));
 
     Http::assertNothingSent();
 });

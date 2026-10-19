@@ -5,18 +5,19 @@ namespace App\Support;
 use Illuminate\Http\Request;
 
 /**
- * Which pages are rendered on the server: the booking pages, which anyone can
- * land on from a search, a shared link or an email, and the privacy policy
- * and terms. They arrive ready to read before any JavaScript runs. The dashboard is only reached signed in,
- * and renders in the browser as before.
+ * Which pages are rendered on the server: the ones anyone can land on from a
+ * search, a shared link or an email (the home page, the booking pages, the
+ * privacy policy and terms), so they arrive ready to read before any
+ * JavaScript runs. The dashboard is only reached signed in, and renders in
+ * the browser as before.
  *
- * The home page isn't here yet: its hero follows the visitor's own clock,
- * which the server can't know. It joins when the redesign builds that part
- * to start from a neutral hour and catch up once the page is running.
+ * The server can't know a visitor's clock, language or time zone, so those
+ * pages start from the business's zone, a fixed locale and, on the home
+ * page, half past three, then catch up once they're running.
  */
 class ServerRendering
 {
-    public const ROUTES = ['booking.show', 'booking.checkout', 'booking.manage', 'privacy', 'terms'];
+    public const ROUTES = ['home', 'booking.show', 'booking.checkout', 'booking.manage', 'privacy', 'terms'];
 
     /**
      * True for a full page load of one of those pages. Inertia's own visits

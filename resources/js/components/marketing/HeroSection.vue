@@ -8,12 +8,14 @@ import { Button } from '@/components/ui/button';
 import { daylight } from '@/lib/daylight';
 import type { Currency } from '@/lib/marketing';
 import { businessTypes, guessCurrency } from '@/lib/marketing';
-import { clock12, hourNow } from '@/lib/time';
+import { clock12, HALF_PAST_THREE, hourNow } from '@/lib/time';
 
 const name = ref('');
 const typeIndex = ref(0);
 const currency = ref<Currency>('GBP');
-const hour = ref(hourNow());
+// Half past three until the page is running and knows the visitor's clock.
+const hour = ref(HALF_PAST_THREE);
+const clockKnown = ref(false);
 const isDark = ref(false);
 
 const type = computed(() => businessTypes[typeIndex.value]);
@@ -41,6 +43,8 @@ let timer = 0;
 onMounted(() => {
     currency.value = guessCurrency();
     isDark.value = document.documentElement.classList.contains('dark');
+    hour.value = hourNow();
+    clockKnown.value = true;
     timer = window.setInterval(() => (hour.value = hourNow()), 30_000);
 });
 
@@ -64,11 +68,15 @@ onBeforeUnmount(() => window.clearInterval(timer));
                     <span
                         class="mr-2 inline-block size-2 rounded-full bg-sun align-middle"
                         aria-hidden="true"
-                    />It's
-                    <span class="whitespace-nowrap font-time">{{
-                        clock12(hour)
-                    }}</span>
-                    where you are. Someone's looking for a time.
+                    /><span
+                        v-if="clockKnown"
+                        class="animate-in duration-500 fade-in"
+                        >It's
+                        <span class="whitespace-nowrap font-time">{{
+                            clock12(hour)
+                        }}</span>
+                        where you are. </span
+                    >Someone's looking for a time.
                 </p>
 
                 <h1

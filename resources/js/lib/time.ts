@@ -39,6 +39,13 @@ export function countdown(seconds: number): string {
     return `${Math.floor(total / 60)}:${pad(total % 60)}`;
 }
 
+/**
+ * The hour the marketing pages show before they know the visitor's clock:
+ * when the server renders them, and in the browser's first render, which
+ * must match. Half past three, after the name.
+ */
+export const HALF_PAST_THREE = 15.5;
+
 /** The current local time as a fractional hour. */
 export function hourNow(date = new Date()): number {
     return date.getHours() + date.getMinutes() / 60;

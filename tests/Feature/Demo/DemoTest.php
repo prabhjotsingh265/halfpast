@@ -92,7 +92,8 @@ it('builds the same diary for the same day', function () {
     buildDemo();
     $second = Booking::withoutGlobalScopes()->orderBy('starts_at')->get()->map(fn (Booking $b) => [$b->service_name, $b->starts_at->toIso8601String(), $b->status->value])->all();
 
-    expect($second)->toBe($first);
+    // As sets: bookings that start at the same moment come back in any order.
+    expect($second)->toEqualCanonicalizing($first)->and(count($second))->toBe(count($first));
 });
 
 it('rebuilds without ever touching a real business or person', function () {

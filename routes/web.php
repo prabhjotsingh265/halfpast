@@ -3,7 +3,9 @@
 use App\Http\Controllers\BookingActionsController;
 use App\Http\Controllers\Business\BookingRulesController;
 use App\Http\Controllers\Business\DataController;
+use App\Http\Controllers\Business\LogoController;
 use App\Http\Controllers\Business\PaymentMethodsController;
+use App\Http\Controllers\Business\ProfileController;
 use App\Http\Controllers\CalendarBlockController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CustomerController;
@@ -70,6 +72,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::get('earnings', [EarningsController::class, 'index'])->name('earnings.index');
 
+            Route::get('business/profile', [ProfileController::class, 'edit'])->name('business.profile.edit');
+            Route::put('business/profile', [ProfileController::class, 'update'])->name('business.profile.update');
+            Route::post('business/logo', [LogoController::class, 'store'])->middleware('throttle:20,1')->name('business.logo.store');
+            Route::delete('business/logo', [LogoController::class, 'destroy'])->name('business.logo.destroy');
             Route::get('business/booking-rules', [BookingRulesController::class, 'edit'])->name('business.rules.edit');
             Route::put('business/booking-rules', [BookingRulesController::class, 'update'])->name('business.rules.update');
             Route::get('business/payment-methods', [PaymentMethodsController::class, 'edit'])->name('business.payments.edit');

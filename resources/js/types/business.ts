@@ -7,5 +7,10 @@ export type CurrentBusiness = {
     currency: string;
     /** A demo business, rebuilt every night. */
     is_demo: boolean;
+    description: string | null;
+    address: string | null;
+    phone: string | null;
+    website: string | null;
+    logo_url: string | null;
     role: 'owner' | 'staff' | null;
 };

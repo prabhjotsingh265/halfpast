@@ -24,7 +24,10 @@ const props = defineProps<{
 defineOptions({
     layout: {
         breadcrumbs: [
-            { title: 'Business settings', href: route('business.rules.edit') },
+            {
+                title: 'Business settings',
+                href: route('business.profile.edit'),
+            },
         ],
     },
 });

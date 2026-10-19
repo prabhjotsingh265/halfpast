@@ -12,6 +12,7 @@ use App\Models\Service;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -84,6 +85,13 @@ class BusinessResource extends Resource
                 TextEntry::make('currency'),
                 TextEntry::make('is_demo')->label('Demo')->formatStateUsing(fn (bool $state) => $state ? 'Yes, rebuilt every night' : 'No'),
                 TextEntry::make('created_at')->label('Joined')->dateTime('j M Y, H:i'),
+            ]),
+            Section::make('Booking page profile')->columns(3)->schema([
+                ImageEntry::make('logo_path')->label('Logo')->disk('public')->height(48)->placeholder('Their initial'),
+                TextEntry::make('description')->columnSpan(2)->placeholder('None'),
+                TextEntry::make('address')->placeholder('None'),
+                TextEntry::make('phone')->placeholder('None'),
+                TextEntry::make('website')->url(fn (Business $record) => $record->website, shouldOpenInNewTab: true)->placeholder('None'),
             ]),
             Section::make('Booking rules')->columns(3)->schema([
                 TextEntry::make('slot_step_minutes')->label('Slot step')->suffix(' min'),

@@ -30,15 +30,22 @@ final class BookingPageSeo
         $prices = $services->pluck('price');
         $names = $services->pluck('name')->take(3)->join(', ', ' and ');
 
-        $description = $services->isEmpty()
+        // The business's own words if it has some; otherwise, what it offers.
+        $description = $business->description ?? ($services->isEmpty()
             ? "Book online with {$business->name}."
-            : "Book {$names} online with {$business->name}, from {$money((int) $prices->min())}. Pick a time and you're booked.";
+            : "Book {$names} online with {$business->name}, from {$money((int) $prices->min())}. Pick a time and you're booked.");
 
         $schema = array_filter([
             '@context' => 'https://schema.org',
             '@type' => 'LocalBusiness',
             'name' => $business->name,
+            'description' => $business->description,
             'url' => $url,
+            'logo' => $business->logoUrl(),
+            'image' => $business->logoUrl(),
+            'telephone' => $business->phone,
+            'address' => $business->address,
+            'sameAs' => $business->website,
             'currenciesAccepted' => $business->currency,
             'priceRange' => $prices->isEmpty() ? null : $money((int) $prices->min()).'–'.$money((int) $prices->max()),
             'openingHoursSpecification' => self::openingHours($business),

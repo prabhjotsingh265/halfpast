@@ -80,7 +80,7 @@ class BuildDemoBusiness
             'timezone' => $plan['timezone'],
             'currency' => $plan['currency'],
         ]);
-        $business->update($plan['settings']);
+        $business->update([...$plan['settings'], ...($plan['profile'] ?? [])]);
         $business->forceFill(['is_demo' => true])->save();
         $this->current->set($business);
 

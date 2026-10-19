@@ -20,8 +20,10 @@ use App\Payments\Gateways;
 use App\Tenancy\CurrentBusiness;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Symfony\Component\Mime\Email;
 
@@ -197,6 +199,31 @@ it("keeps demo logins' sign-in details as they are", function () {
     $real = User::factory()->create();
     $this->actingAs($real)->patch(route('profile.update'), ['name' => 'Renamed', 'email' => $real->email])->assertSessionHasNoErrors();
     expect($real->fresh()->name)->toBe('Renamed');
+});
+
+it("keeps the demo's public page as it is: no pictures, and no rewriting its profile", function () {
+    Storage::fake('public');
+    buildDemo();
+    $kesar = demoBusiness('kesar-beauty-lounge');
+
+    expect($kesar->description)->toContain('Park Street')
+        ->and(demoBusiness('fade-and-co')->phone)->toBe('020 7946 0321');
+
+    $this->post(route('demo.login', ['slug' => 'kesar-beauty-lounge']));
+
+    $this->post(route('business.logo.store'), ['logo' => UploadedFile::fake()->image('logo.png', 300, 300)])
+        ->assertInertiaFlash('toast.message', ProtectDemoAccounts::PUBLIC_MESSAGE);
+    $this->put(route('business.profile.update'), ['name' => 'Something rude'])
+        ->assertInertiaFlash('toast.message', ProtectDemoAccounts::PUBLIC_MESSAGE);
+
+    // A photo sent with a new team member is dropped; the member is still added.
+    $this->post(route('staff.store'), ['name' => 'New starter', 'photo' => UploadedFile::fake()->image('face.jpg', 300, 300), 'service_ids' => [], 'hours' => []])
+        ->assertSessionHasNoErrors();
+
+    app(CurrentBusiness::class)->set($kesar);
+    expect($kesar->fresh()->only(['name', 'logo_path']))->toBe(['name' => 'Kesar Beauty Lounge', 'logo_path' => null])
+        ->and(Staff::where('name', 'New starter')->sole()->photo_path)->toBeNull();
+    app(CurrentBusiness::class)->set(null);
 });
 
 it("doesn't send emails the business would send, from a demo business", function () {

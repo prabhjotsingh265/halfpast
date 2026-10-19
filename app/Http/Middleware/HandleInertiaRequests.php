@@ -78,6 +78,11 @@ class HandleInertiaRequests extends Middleware
             'timezone' => $business->timezone,
             'currency' => $business->currency,
             'is_demo' => $business->is_demo,
+            'description' => $business->description,
+            'address' => $business->address,
+            'phone' => $business->phone,
+            'website' => $business->website,
+            'logo_url' => $business->logoUrl(),
             'role' => $user instanceof User ? $user->roleIn($business)?->value : null,
         ];
     }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { CalendarCog, CreditCard, Database } from '@lucide/vue';
+import { CalendarCog, CreditCard, Database, Store } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -9,6 +9,11 @@ import { toUrl } from '@/lib/utils';
 import type { NavItem } from '@/types';
 
 const items: NavItem[] = [
+    {
+        title: 'Booking page',
+        href: route('business.profile.edit'),
+        icon: Store,
+    },
     {
         title: 'Booking rules',
         href: route('business.rules.edit'),
@@ -33,7 +38,7 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
     <div class="px-4 py-6">
         <Heading
             title="Business settings"
-            description="How customers book you, and how they pay."
+            description="Your booking page, how customers book you, and how they pay."
         />
 
         <div class="flex flex-col lg:flex-row lg:space-x-12">

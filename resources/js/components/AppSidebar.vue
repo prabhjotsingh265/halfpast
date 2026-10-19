@@ -60,7 +60,7 @@ const mainNavItems = computed<NavItem[]>(() => [
               },
               {
                   title: 'Business settings',
-                  href: route('business.rules.edit'),
+                  href: route('business.profile.edit'),
                   icon: SlidersHorizontal,
               },
           ]

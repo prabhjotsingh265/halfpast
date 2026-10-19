@@ -28,6 +28,7 @@ class ResetDemo
 
         foreach (Business::where('is_demo', true)->get() as $business) {
             Storage::disk('public')->deleteDirectory("staff/{$business->id}");
+            Storage::disk('public')->deleteDirectory("logos/{$business->id}");
             // Services, staff, bookings, payments and the rest go with it.
             $business->delete();
         }

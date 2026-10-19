@@ -96,6 +96,11 @@ class ExportBusinessData
 
         $zip->addFromString('business.json', (string) json_encode([
             'name' => $business->name,
+            'description' => $business->description,
+            'address' => $business->address,
+            'phone' => $business->phone,
+            'website' => $business->website,
+            'logo' => $business->logoUrl(),
             'booking_page' => route('booking.show', ['business' => $business->slug]),
             'timezone' => $zone,
             'currency' => $business->currency,

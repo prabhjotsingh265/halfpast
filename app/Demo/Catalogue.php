@@ -32,6 +32,12 @@ final class Catalogue
             'slug' => 'kesar-beauty-lounge',
             'name' => 'Kesar Beauty Lounge',
             'summary' => 'A salon in Kolkata, in rupees',
+            // Addresses are made up. Phone numbers, where there are any, come from
+            // the ranges set aside for fiction (Ofcom's 020 7946 0xxx, the US 555-01xx).
+            'profile' => [
+                'description' => "A calm salon off Park Street for cuts, colour, threading and party make-up. The chai's on us while you wait.",
+                'address' => '17 Camac Street, Kolkata 700017',
+            ],
             'timezone' => 'Asia/Kolkata',
             'currency' => 'INR',
             'settings' => ['slot_step_minutes' => 15, 'min_notice_minutes' => 60, 'cancellation_window_hours' => 24, 'payment_gateways' => ['stripe', 'razorpay', 'test']],
@@ -79,6 +85,11 @@ final class Catalogue
             'slug' => 'fade-and-co',
             'name' => 'Fade & Co. Barbers',
             'summary' => 'A barber in London, in pounds',
+            'profile' => [
+                'description' => 'Fades, beard work and hot-towel shaves in Shoreditch. Booking guarantees your chair; walk-ins when there\'s a gap.',
+                'address' => '42 Redchurch Street, London E2 7DJ',
+                'phone' => '020 7946 0321',
+            ],
             'timezone' => 'Europe/London',
             'currency' => 'GBP',
             'settings' => ['slot_step_minutes' => 15, 'min_notice_minutes' => 30, 'cancellation_window_hours' => 12, 'payment_gateways' => ['stripe', 'test']],
@@ -126,6 +137,11 @@ final class Catalogue
             'slug' => 'stillwater-physio',
             'name' => 'Stillwater Physio',
             'summary' => 'A physio clinic in New York, in dollars',
+            'profile' => [
+                'description' => 'Sports and spinal physiotherapy in Chelsea. Every first visit starts with a full assessment and ends with a plan you can follow at home.',
+                'address' => '210 West 22nd Street, New York, NY 10011',
+                'phone' => '(212) 555-0147',
+            ],
             'timezone' => 'America/New_York',
             'currency' => 'USD',
             'settings' => ['slot_step_minutes' => 30, 'min_notice_minutes' => 720, 'cancellation_window_hours' => 48, 'booking_horizon_days' => 60, 'payment_gateways' => ['stripe', 'test']],

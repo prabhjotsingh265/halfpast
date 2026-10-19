@@ -10,10 +10,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
  * @property string $name
+ * @property string|null $description A line or two for the booking page.
+ * @property string|null $address
+ * @property string|null $phone
+ * @property string|null $website
+ * @property string|null $logo_path On the public disk; see SaveBusinessLogo.
  * @property string $slug
  * @property bool $is_demo One of the demo businesses, rebuilt every night.
  * @property string $timezone
@@ -30,6 +36,10 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable([
     'name',
+    'description',
+    'address',
+    'phone',
+    'website',
     'slug',
     'timezone',
     'currency',
@@ -63,6 +73,12 @@ class Business extends Model
         'hold_minutes' => 15,
         'payment_gateways' => '[]',
     ];
+
+    /** The logo's address, or null for the initial in a coloured square. */
+    public function logoUrl(): ?string
+    {
+        return $this->logo_path ? Storage::disk('public')->url($this->logo_path) : null;
+    }
 
     /**
      * Everyone who works here, with their role.

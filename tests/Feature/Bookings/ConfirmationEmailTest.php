@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Staff;
 use App\Tenancy\CurrentBusiness;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 /*
  * A threading appointment at a salon in Mumbai: 10:30 am India time on
@@ -85,4 +86,33 @@ it('offers the calendar file on a signed link', function () {
     expect($response->getContent())->toContain('BEGIN:VEVENT');
 
     $this->get("/kesar/booking/{$this->booking->code}/calendar")->assertForbidden();
+});
+
+it('says where to go and how to get in touch, and follows a dark theme', function () {
+    $this->business->update(['address' => '17 Camac Street, Kolkata 700017', 'phone' => '033 4000 1234']);
+
+    $mail = new BookingConfirmedMail($this->booking->fresh());
+
+    $mail->assertSeeInHtml('17 Camac Street, Kolkata 700017')
+        ->assertSeeInHtml('maps/search/?api=1&query=17+Camac+Street%2C+Kolkata+700017', false)
+        ->assertSeeInHtml('href="tel:03340001234"', false)
+        ->assertSeeInHtml('See you Sunday 18 October at 10:30 am.')
+        ->assertSeeInHtml('<meta name="color-scheme" content="light dark">', false)
+        ->assertSeeInHtml('@media (prefers-color-scheme: dark)', false)
+        ->assertSeeInText('17 Camac Street, Kolkata 700017')
+        ->assertSeeInText('Questions? Call Kesar Beauty Lounge on 033 4000 1234.');
+
+    // The address is in the body once, not repeated at the foot.
+    expect(substr_count($mail->render(), '17 Camac Street, Kolkata 700017'))->toBe(1);
+});
+
+it("shows the business's logo once it has one, and its initial until then", function () {
+    (new BookingConfirmedMail($this->booking->fresh()))
+        ->assertDontSeeInHtml('<img', false)
+        ->assertSeeInHtml('>K</td>', false);
+
+    $this->business->forceFill(['logo_path' => 'logos/1/logo.png'])->save();
+
+    (new BookingConfirmedMail($this->booking->fresh()))
+        ->assertSeeInHtml('<img src="'.Storage::disk('public')->url('logos/1/logo.png').'" alt="Kesar Beauty Lounge"', false);
 });

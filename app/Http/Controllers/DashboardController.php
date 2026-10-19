@@ -170,7 +170,7 @@ class DashboardController extends Controller
     /**
      * The steps to start taking bookings, until they're all done.
      *
-     * @return array{services: bool, team: bool, hours: bool, assigned: bool, payments: bool}|null
+     * @return array{services: bool, team: bool, hours: bool, assigned: bool, payments: bool, profile: bool}|null
      */
     private function setup(Business $business, Gateways $gateways): ?array
     {
@@ -180,9 +180,10 @@ class DashboardController extends Controller
             'hours' => Staff::where('is_active', true)->whereHas('workingHours')->exists(),
             'assigned' => Service::where('is_active', true)->whereHas('staff', fn ($query) => $query->where('staff.is_active', true))->exists(),
             'payments' => $gateways->canTakeDeposits($business),
+            'profile' => $business->logo_path !== null || $business->description !== null,
         ];
 
-        // Taking deposits is optional, so it doesn't hold the checklist open on its own.
+        // Deposits and the profile are optional, so they don't hold the checklist open on their own.
         return $steps['services'] && $steps['team'] && $steps['hours'] && $steps['assigned'] ? null : $steps;
     }
 }

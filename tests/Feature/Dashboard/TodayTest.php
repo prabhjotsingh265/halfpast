@@ -150,7 +150,11 @@ it('flags a refund that never went through, and services nobody can pay a deposi
 });
 
 it('walks a new business through setting up, then gets out of the way', function () {
-    expect(dashboardFor($this->owner)['setup'])->toBe(['services' => false, 'team' => true, 'hours' => false, 'assigned' => false, 'payments' => true]);
+    expect(dashboardFor($this->owner)['setup'])->toBe(['services' => false, 'team' => true, 'hours' => false, 'assigned' => false, 'payments' => true, 'profile' => false]);
+
+    // A line about the business ticks the optional profile step.
+    $this->business->update(['description' => 'Cuts and colour.']);
+    expect(dashboardFor($this->owner)['setup']['profile'])->toBeTrue();
 
     $service = Service::factory()->for($this->business)->create();
     $service->staff()->attach($this->priya);

@@ -69,6 +69,7 @@ const props = defineProps<{
         hours: boolean;
         assigned: boolean;
         payments: boolean;
+        profile: boolean;
     } | null;
 }>();
 
@@ -254,6 +255,12 @@ const steps = computed(() =>
                   label: 'Take deposits online (optional)',
                   href: route('business.payments.edit'),
                   action: 'Set up',
+              },
+              {
+                  done: props.setup.profile,
+                  label: 'Add your logo and a line about you (optional)',
+                  href: route('business.profile.edit'),
+                  action: 'Add',
               },
           ]
         : [],

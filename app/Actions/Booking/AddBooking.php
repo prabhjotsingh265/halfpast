@@ -72,6 +72,7 @@ class AddBooking
 
         try {
             $booking = DB::transaction(function () use ($business, $service, $staff, $startsAt, $endsAt, $blockedUntil, $customer, $notes, $now) {
+                Booking::lockDiary($staff->id);
                 $this->clearLapsedHolds->handle($business->id, $staff->id, $startsAt, $blockedUntil, $now);
 
                 $booking = new Booking([
@@ -93,7 +94,7 @@ class AddBooking
                 $booking->save();
 
                 return $booking;
-            });
+            }, Booking::OVERLAP_ATTEMPTS);
         } catch (QueryException $e) {
             if ($e->getCode() !== Booking::OVERLAP_ERROR) {
                 throw $e;

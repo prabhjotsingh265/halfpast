@@ -163,8 +163,14 @@ class SettlePayment
     private function bringBack(Booking $booking): PaymentOutcome
     {
         try {
-            DB::transaction(fn () => Booking::withoutGlobalScopes()->whereKey($booking->id)
-                ->update(['status' => BookingStatus::Confirmed, 'hold_expires_at' => null]));
+            DB::transaction(function () use ($booking) {
+                if ($booking->staff_id !== null) {
+                    Booking::lockDiary($booking->staff_id);
+                }
+
+                Booking::withoutGlobalScopes()->whereKey($booking->id)
+                    ->update(['status' => BookingStatus::Confirmed, 'hold_expires_at' => null]);
+            }, Booking::OVERLAP_ATTEMPTS);
         } catch (QueryException $e) {
             if ($e->getCode() !== Booking::OVERLAP_ERROR) {
                 throw $e;

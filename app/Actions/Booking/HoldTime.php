@@ -41,7 +41,7 @@ class HoldTime
 
         foreach ($this->leastBusyFirst($business, $slot->staffIds, $date, $now) as $staffId) {
             try {
-                return DB::transaction(fn () => $this->hold($business, $service, $staffId, $startsAt, $now));
+                return DB::transaction(fn () => $this->hold($business, $service, $staffId, $startsAt, $now), Booking::OVERLAP_ATTEMPTS);
             } catch (QueryException $e) {
                 if ($e->getCode() !== Booking::OVERLAP_ERROR) {
                     throw $e;
@@ -57,6 +57,7 @@ class HoldTime
         $endsAt = $startsAt->addMinutes($service->duration_minutes);
         $blockedUntil = $endsAt->addMinutes($service->buffer_after_minutes);
 
+        Booking::lockDiary($staffId);
         $this->clearLapsedHolds->handle($business->id, $staffId, $startsAt, $blockedUntil, $now);
 
         $booking = new Booking([

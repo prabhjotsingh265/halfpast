@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
@@ -74,6 +75,30 @@ class Booking extends Model
 
     /** PostgreSQL's code for a row refused by an exclusion constraint. */
     public const OVERLAP_ERROR = '23P01';
+
+    /**
+     * How many times to run a transaction that takes someone's time, in case
+     * PostgreSQL ends one as a deadlock (see lockDiary) instead of refusing it.
+     */
+    public const OVERLAP_ATTEMPTS = 3;
+
+    /** The first half of the advisory lock key for a person's diary. */
+    private const DIARY_LOCK = 4823;
+
+    /**
+     * Queues transactions that take a person's time, until this one ends.
+     *
+     * Without it, two overlapping bookings can each write their row and then
+     * wait for the other to finish, and PostgreSQL ends one as a deadlock
+     * instead of refusing it. Queued, each finds the one before it already
+     * committed and the overlap rule refuses it cleanly. The rule still
+     * decides; this only stops them tripping over each other. Different
+     * people's diaries don't wait for each other.
+     */
+    public static function lockDiary(int $staffId): void
+    {
+        DB::statement('select pg_advisory_xact_lock(?, ?)', [self::DIARY_LOCK, $staffId]);
+    }
 
     /**
      * @return array<string, string>

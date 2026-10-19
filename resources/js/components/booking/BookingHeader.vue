@@ -2,12 +2,14 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { Globe } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import BusinessLogo from '@/components/business/BusinessLogo.vue';
 import { hourIn, timeIn, zoneCity } from '@/lib/booking';
 import { daylightRange } from '@/lib/daylight';
 
 /**
- * The top of a business's booking pages: its initial and name over the
- * colour of the hour where the business is, beside a live clock for there.
+ * The top of the checkout and manage pages: the business's logo (or its
+ * initial) and name over the colour of the hour where it is, beside a live
+ * clock for there. The booking page itself has the fuller BookingHero.
  */
 withDefaults(defineProps<{ compact?: boolean }>(), { compact: false });
 
@@ -48,13 +50,14 @@ const tint = computed(() => {
         >
             <Link
                 :href="route('booking.show', { business: business.slug })"
-                class="grid shrink-0 animate-in place-items-center rounded-2xl bg-sun font-[820] text-[#15181F] shadow-sm duration-500 zoom-in-75"
-                :class="
-                    compact ? 'size-11 text-xl' : 'size-14 text-2xl md:size-16'
-                "
+                class="shrink-0 animate-in rounded-2xl shadow-sm duration-500 zoom-in-75"
                 :aria-label="`${business.name} booking page`"
             >
-                {{ business.name.trim().charAt(0).toUpperCase() }}
+                <BusinessLogo
+                    :name="business.name"
+                    :logo-url="business.logo_url"
+                    :size="compact ? 'md' : 'lg'"
+                />
             </Link>
             <div class="min-w-0">
                 <h1

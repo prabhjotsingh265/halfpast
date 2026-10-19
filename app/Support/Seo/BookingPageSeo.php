@@ -5,8 +5,7 @@ namespace App\Support\Seo;
 use App\Mail\Money;
 use App\Models\Business;
 use App\Models\Service;
-use App\Models\Staff;
-use App\Models\WorkingHour;
+use App\Support\OpeningHours;
 use App\Support\ShareImage;
 use Illuminate\Support\Collection;
 
@@ -77,33 +76,15 @@ final class BookingPageSeo
     }
 
     /**
-     * Open whenever anyone taking bookings is working: each day's stretches
-     * across the team, joined where they overlap.
-     *
      * @return list<array<string, string>>
      */
     private static function openingHours(Business $business): array
     {
-        $active = Staff::withoutGlobalScopes()->where('business_id', $business->id)->where('is_active', true)->pluck('id');
-        $rows = WorkingHour::withoutGlobalScopes()->whereIn('staff_id', $active)->orderBy('starts_at')->get()->groupBy('weekday');
         $spec = [];
 
-        foreach (self::DAYS as $weekday => $day) {
-            $merged = [];
-
-            foreach ($rows->get($weekday, collect()) as $hour) {
-                [$from, $to] = [substr($hour->starts_at, 0, 5), substr($hour->ends_at, 0, 5)];
-                $last = array_key_last($merged);
-
-                if ($last !== null && $from <= $merged[$last][1]) {
-                    $merged[$last][1] = max($merged[$last][1], $to);
-                } else {
-                    $merged[] = [$from, $to];
-                }
-            }
-
-            foreach ($merged as [$opens, $closes]) {
-                $spec[] = ['@type' => 'OpeningHoursSpecification', 'dayOfWeek' => "https://schema.org/{$day}", 'opens' => $opens, 'closes' => $closes === '24:00' ? '23:59' : $closes];
+        foreach (OpeningHours::week($business) as $weekday => $stretches) {
+            foreach ($stretches as [$opens, $closes]) {
+                $spec[] = ['@type' => 'OpeningHoursSpecification', 'dayOfWeek' => 'https://schema.org/'.self::DAYS[$weekday], 'opens' => $opens, 'closes' => $closes === '24:00' ? '23:59' : $closes];
             }
         }
 

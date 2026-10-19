@@ -2,10 +2,12 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { CalendarSearch, Store, TriangleAlert } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
-import BookingHeader from '@/components/booking/BookingHeader.vue';
+import BookingHero from '@/components/booking/BookingHero.vue';
+import BusinessDetails from '@/components/booking/BusinessDetails.vue';
 import DayStrip from '@/components/booking/DayStrip.vue';
 import ServicePicker from '@/components/booking/ServicePicker.vue';
 import StaffPicker from '@/components/booking/StaffPicker.vue';
+import StepBadge from '@/components/booking/StepBadge.vue';
 import TimeGrid from '@/components/booking/TimeGrid.vue';
 import HalfpastMark from '@/components/brand/HalfpastMark.vue';
 import { Button } from '@/components/ui/button';
@@ -14,6 +16,7 @@ import { timeIn, zoneCity } from '@/lib/booking';
 import { formatDate } from '@/lib/dates';
 import { visitorZone } from '@/lib/hydration';
 import { formatMoney } from '@/lib/money';
+import type { WeekHours } from '@/lib/openingHours';
 import { duration } from '@/lib/time';
 import type {
     BookableService,
@@ -32,6 +35,8 @@ const props = defineProps<{
     selection: BookingSelection;
     days: BookingDay[] | null;
     times: BookableTime[] | null;
+    hours: WeekHours;
+    serverNow: string;
 }>();
 
 const page = usePage();
@@ -237,7 +242,7 @@ watch(
     <Head :title="`Book with ${business.name}`" />
 
     <div class="min-h-svh bg-background pb-32 text-foreground lg:pb-16">
-        <BookingHeader />
+        <BookingHero :hours="hours" :server-now="serverNow" />
 
         <main
             class="mx-auto grid max-w-5xl gap-10 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start"
@@ -267,10 +272,7 @@ watch(
                         id="step-service"
                         class="mb-4 flex items-center gap-3 text-lg font-semibold"
                     >
-                        <span
-                            class="grid size-7 place-items-center rounded-full bg-foreground text-sm text-background"
-                            >1</span
-                        >
+                        <StepBadge :step="1" :done="service !== null" />
                         What would you like?
                     </h2>
                     <ServicePicker
@@ -290,10 +292,12 @@ watch(
                         id="step-staff"
                         class="mb-4 flex items-center gap-3 text-lg font-semibold"
                     >
-                        <span
-                            class="grid size-7 place-items-center rounded-full bg-foreground text-sm text-background"
-                            >2</span
-                        >
+                        <StepBadge
+                            :step="2"
+                            :done="
+                                selection.staff_id !== null || picked !== null
+                            "
+                        />
                         Who with?
                     </h2>
                     <StaffPicker
@@ -316,10 +320,10 @@ watch(
                             id="step-time"
                             class="flex items-center gap-3 text-lg font-semibold"
                         >
-                            <span
-                                class="grid size-7 place-items-center rounded-full bg-foreground text-sm text-background"
-                                >{{ people.length > 1 ? 3 : 2 }}</span
-                            >
+                            <StepBadge
+                                :step="people.length > 1 ? 3 : 2"
+                                :done="picked !== null"
+                            />
                             When suits you?
                         </h2>
 
@@ -615,6 +619,12 @@ watch(
                 </div>
             </div>
         </Transition>
+
+        <BusinessDetails
+            v-if="services.length > 0"
+            :staff="staff"
+            :hours="hours"
+        />
 
         <footer
             class="mx-auto flex max-w-5xl items-center gap-2 px-4 text-xs text-muted-foreground"

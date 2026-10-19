@@ -8,6 +8,7 @@ use App\Models\Business;
 use App\Models\Service;
 use App\Models\Staff;
 use App\Payments\Gateways;
+use App\Support\OpeningHours;
 use App\Support\Seo\BookingPageSeo;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -73,6 +74,10 @@ class BookingPageController extends Controller
             ])->values(),
             'today' => $today,
             'lastDay' => $lastDay,
+            // The week's opening hours and the server's clock, for the live
+            // "open now" line: the server and the browser start from the same moment.
+            'hours' => fn () => OpeningHours::week($business),
+            'serverNow' => fn () => now()->utc()->toIso8601ZuluString(),
             'holdMinutes' => $business->hold_minutes,
             'selection' => fn () => [
                 'service_id' => $service?->id,

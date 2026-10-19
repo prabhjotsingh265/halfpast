@@ -67,6 +67,21 @@ export function daylight(
 }
 
 /**
+ * A stronger version of an hour's colour, for small marks like a bar on a
+ * chart, which the pale slot tints would barely show against the page.
+ */
+export function daylightAccent(
+    hour: number,
+    mode: 'light' | 'dark' = 'light',
+): string {
+    const [, c, h] = daylightOklch(hour);
+    const lightness = mode === 'dark' ? 0.56 : 0.84;
+    const chroma = Math.min(c * 2.2, mode === 'dark' ? 0.1 : 0.12);
+
+    return `oklch(${lightness.toFixed(3)} ${chroma.toFixed(3)} ${h.toFixed(1)})`;
+}
+
+/**
  * CSS custom properties for a block running from one hour to another, in both
  * modes, so a gradient can follow the theme without knowing it:
  * bg-[linear-gradient(90deg,var(--from),var(--to))]

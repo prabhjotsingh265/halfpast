@@ -7,8 +7,12 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Demo\DemoLogins;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Responses\LoginResponse;
+use App\Models\User;
+use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -38,6 +42,30 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
+        $this->configureEmails();
+    }
+
+    /**
+     * The sign-up and password emails, in Halfpast's words rather than the
+     * framework's.
+     */
+    private function configureEmails(): void
+    {
+        VerifyEmail::toMailUsing(fn (object $notifiable, string $url) => (new MailMessage)
+            ->subject('Confirm your email for Halfpast')
+            ->greeting('One click to go')
+            ->line('Confirm this is your email address, and you can set up your booking page.')
+            ->action('Confirm my email', $url)
+            ->line("If you didn't sign up for Halfpast, ignore this email and nothing will happen.")
+            ->salutation('Halfpast'));
+
+        ResetPassword::toMailUsing(fn (object $notifiable, string $token) => (new MailMessage)
+            ->subject('Reset your Halfpast password')
+            ->greeting('Reset your password')
+            ->line('Someone, hopefully you, asked to reset the password for this account.')
+            ->action('Choose a new password', url(route('password.reset', ['token' => $token, 'email' => $notifiable instanceof User ? $notifiable->email : ''], false)))
+            ->line('The link works for '.config('auth.passwords.users.expire').' minutes. If it wasn\'t you, ignore this email: your password stays as it is.')
+            ->salutation('Halfpast'));
     }
 
     /**
